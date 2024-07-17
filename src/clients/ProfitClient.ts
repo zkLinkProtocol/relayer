@@ -51,6 +51,29 @@ const { getNativeTokenSymbol, isMessageEmpty, resolveDepositMessage } = sdkUtils
 
 const bn10 = toBN(10);
 
+const tokens = {
+  810181: {
+    "0x65e3d497f0Bd78657B08AbB2a41aA7edc5404553": {
+      symbol: "WBTC",
+      decimals: 18
+    },
+    "0x3d5D2cc9dd20fb85B3B92DbD13BbCF343aA68292": {
+      symbol: "USDC",
+      decimals: 18
+    }
+  },
+  421614: {
+    "0x8d7b54AAc168585bdf8d7c7c34DD903CdAe388E8": {
+      symbol: "WBTC",
+      decimals: 18
+    },
+    "0xc6118f9FAFc657EBd36D167A50B46a1A9dA2D057": {
+      symbol: "USDC",
+      decimals: 18
+    }
+  }
+};
+
 // @note All FillProfit BigNumbers are scaled to 18 decimals unless specified otherwise.
 export type FillProfit = {
   inputTokenPriceUsd: BigNumber;
@@ -138,12 +161,12 @@ export class ProfitClient {
       new defiLlama.PriceFeed(),
     ]);
 
-    for (const chainId of this.enabledChainIds) {
-      this.relayerFeeQueries[chainId] = this.constructRelayerFeeQuery(
-        chainId,
-        spokePoolClients[chainId].spokePool.provider
-      );
-    }
+    // for (const chainId of this.enabledChainIds) {
+    //   this.relayerFeeQueries[chainId] = this.constructRelayerFeeQuery(
+    //     chainId,
+    //     spokePoolClients[chainId].spokePool.provider
+    //   );
+    // }
 
     this.isTestnet = this.hubPoolClient.chainId !== CHAIN_IDs.MAINNET;
   }
@@ -194,14 +217,15 @@ export class ProfitClient {
    * @returns Token token price for token.
    */
   getPriceOfToken(token: string): BigNumber {
-    const address = this.resolveTokenAddress(token);
-    const price = this.tokenPrices[address];
-    if (!isDefined(price)) {
-      this.logger.warn({ at: "ProfitClient#getPriceOfToken", message: `Token ${token} not in price list.`, address });
-      return bnZero;
-    }
+    // const address = this.resolveTokenAddress(token);
+    // const price = this.tokenPrices[address];
+    // if (!isDefined(price)) {
+    //   this.logger.warn({ at: "ProfitClient#getPriceOfToken", message: `Token ${token} not in price list.`, address });
+    //   return bnZero;
+    // }
 
-    return price;
+    // return price;
+    return bnZero;
   }
 
   private async _getTotalGasCost(deposit: V3Deposit, relayer: string): Promise<TransactionCostEstimate> {
@@ -391,13 +415,14 @@ export class ProfitClient {
 
   // Return USD amount of fill amount for deposited token, should always return in wei as the units.
   getFillAmountInUsd(deposit: Deposit, fillAmount = deposit.outputAmount): BigNumber {
-    const l1TokenInfo = this.hubPoolClient.getTokenInfoForDeposit(deposit);
-    if (!l1TokenInfo) {
-      const { inputToken } = deposit;
-      throw new Error(
-        `ProfitClient#getFillAmountInUsd missing l1TokenInfo for deposit with origin token: ${inputToken}`
-      );
-    }
+    // const l1TokenInfo = this.hubPoolClient.getTokenInfoForDeposit(deposit);
+    // if (!l1TokenInfo) {
+    //   const { inputToken } = deposit;
+    //   throw new Error(
+    //     `ProfitClient#getFillAmountInUsd missing l1TokenInfo for deposit with origin token: ${inputToken}`
+    //   );
+    // }
+    const l1TokenInfo = tokens[deposit.destinationChainId][deposit.outputToken];
     const tokenPriceInUsd = this.getPriceOfToken(l1TokenInfo.symbol);
     return fillAmount.mul(tokenPriceInUsd).div(bn10.pow(l1TokenInfo.decimals));
   }

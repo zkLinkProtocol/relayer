@@ -26,6 +26,27 @@ type TokenShortfallType = {
   [chainId: number]: { [token: string]: { deposits: number[]; totalRequirement: BigNumber } };
 };
 
+const tokens = {
+  810181: [{
+    address: "0x65e3d497f0Bd78657B08AbB2a41aA7edc5404553",
+    symbol: "WBTC",
+    decimals: 18
+  },{
+    address: "0x3d5D2cc9dd20fb85B3B92DbD13BbCF343aA68292",
+    symbol: "USDC",
+    decimals: 18
+  }],
+  421614: [{
+    address: "0x8d7b54AAc168585bdf8d7c7c34DD903CdAe388E8",
+    symbol: "WBTC",
+    decimals: 18
+  },{
+    address: "0xc6118f9FAFc657EBd36D167A50B46a1A9dA2D057",
+    symbol: "USDC",
+    decimals: 18
+  }]
+};
+
 export class TokenClient {
   tokenData: TokenDataType = {};
   tokenShortfall: TokenShortfallType = {};
@@ -42,7 +63,10 @@ export class TokenClient {
   }
 
   getBalance(chainId: number, token: string): BigNumber {
-    if (!this._hasTokenPairData(chainId, token)) {
+    // if (!this._hasTokenPairData(chainId, token)) {
+    //   return bnZero;
+    // }
+    if (this.tokenData[chainId][token] === undefined) {
       return bnZero;
     }
     return this.tokenData[chainId][token].balance;
@@ -174,35 +198,35 @@ export class TokenClient {
   resolveRemoteTokens(chainId: number, hubPoolTokens: L1Token[]): Contract[] {
     const { signer } = this.spokePoolClients[chainId].spokePool;
 
-    if (chainId === this.hubPoolClient.chainId) {
+    // if (chainId === this.hubPoolClient.chainId) {
       return hubPoolTokens.map(({ address }) => new Contract(address, ERC20.abi, signer));
-    }
+    // }
 
-    const tokens = hubPoolTokens
-      .map(({ symbol, address }) => {
-        let tokenAddrs: string[] = [];
-        try {
-          const spokePoolToken = this.hubPoolClient.getL2TokenForL1TokenAtBlock(address, chainId);
-          tokenAddrs.push(spokePoolToken);
-        } catch {
-          // No known deployment for this token on the SpokePool.
-          // note: To be overhauled subject to https://github.com/across-protocol/sdk/pull/643
-        }
+    // const tokens = hubPoolTokens
+    //   .map(({ symbol, address }) => {
+    //     let tokenAddrs: string[] = [];
+    //     try {
+    //       const spokePoolToken = this.hubPoolClient.getL2TokenForL1TokenAtBlock(address, chainId);
+    //       tokenAddrs.push(spokePoolToken);
+    //     } catch {
+    //       // No known deployment for this token on the SpokePool.
+    //       // note: To be overhauled subject to https://github.com/across-protocol/sdk/pull/643
+    //     }
 
-        // If the HubPool token is USDC then it might map to multiple tokens on the destination chain.
-        if (symbol === "USDC") {
-          ["USDC.e", "USDbC"]
-            .map((symbol) => TOKEN_SYMBOLS_MAP[symbol]?.addresses[chainId])
-            .filter(isDefined)
-            .forEach((address) => tokenAddrs.push(address));
-          tokenAddrs = dedupArray(tokenAddrs);
-        }
+    //     // If the HubPool token is USDC then it might map to multiple tokens on the destination chain.
+    //     if (symbol === "USDC") {
+    //       ["USDC.e", "USDbC"]
+    //         .map((symbol) => TOKEN_SYMBOLS_MAP[symbol]?.addresses[chainId])
+    //         .filter(isDefined)
+    //         .forEach((address) => tokenAddrs.push(address));
+    //       tokenAddrs = dedupArray(tokenAddrs);
+    //     }
 
-        return tokenAddrs.filter(isDefined).map((address) => new Contract(address, ERC20.abi, signer));
-      })
-      .flat();
+    //     return tokenAddrs.filter(isDefined).map((address) => new Contract(address, ERC20.abi, signer));
+    //   })
+    //   .flat();
 
-    return tokens;
+    // return tokens;
   }
 
   async updateChain(
@@ -213,6 +237,7 @@ export class TokenClient {
 
     const multicall3 = await sdkUtils.getMulticall3(chainId, spokePool.provider);
     if (!isDefined(multicall3)) {
+      hubPoolTokens = tokens[chainId];
       return this.fetchTokenData(chainId, hubPoolTokens);
     }
 

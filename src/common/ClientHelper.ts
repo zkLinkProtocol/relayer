@@ -103,9 +103,9 @@ export async function constructSpokePoolClientsWithLookback(
   // running the disputer or proposer functionality as it can lead to proposing disputable bundles or
   // disputing valid bundles.
 
-  if (!hubPoolClient.isUpdated) {
-    throw new Error("Config store client must be updated before constructing spoke pool clients");
-  }
+  // if (!hubPoolClient.isUpdated) {
+  //   throw new Error("Config store client must be updated before constructing spoke pool clients");
+  // }
 
   const hubPoolChainId = hubPoolClient.chainId;
   const lookback = getCurrentTime() - initialLookBackOverride;
@@ -157,9 +157,9 @@ function getEnabledChainsInBlockRange(
   mainnetStartBlock: number,
   mainnetEndBlock?: number
 ): number[] {
-  if (!configStoreClient.isUpdated) {
-    throw new Error("Config store client must be updated before constructing spoke pool clients");
-  }
+  // if (!configStoreClient.isUpdated) {
+  //   throw new Error("Config store client must be updated before constructing spoke pool clients");
+  // }
   return spokePoolChainsOverride.length > 0
     ? spokePoolChainsOverride
     : configStoreClient.getEnabledChainsInBlockRange(mainnetStartBlock, mainnetEndBlock);
@@ -203,16 +203,18 @@ export async function constructSpokePoolClientsWithStartBlocks(
   const spokePoolSigners = await getSpokePoolSigners(baseSigner, enabledChains);
   const spokePools = await Promise.all(
     enabledChains.map(async (chainId) => {
-      const spokePoolAddr = hubPoolClient.getSpokePoolForBlock(chainId, toBlockOverride[1]);
+      // const spokePoolAddr = hubPoolClient.getSpokePoolForBlock(chainId, toBlockOverride[1]);
+      const spokePoolAddr = config.spokePoolConfig[chainId]["address"];
       const spokePoolContract = SpokePool.connect(spokePoolAddr, spokePoolSigners[chainId]);
-      const registrationBlock = await resolveSpokePoolActivationBlock(chainId, hubPoolClient, toBlockOverride[1]);
+      // const registrationBlock = await resolveSpokePoolActivationBlock(chainId, hubPoolClient, toBlockOverride[1]);
+      const registrationBlock = config.spokePoolConfig[chainId]["registrationBlock"];
       return { chainId, contract: spokePoolContract, registrationBlock };
     })
   );
 
   // Explicitly set toBlocks for all chains so we can re-use them in other clients to make sure they all query
   // state to the same "latest" block per chain.
-  const hubPoolBlock = await hubPoolClient.hubPool.provider.getBlock(hubPoolClient.latestBlockSearched);
+  // const hubPoolBlock = await hubPoolClient.hubPool.provider.getBlock(hubPoolClient.latestBlockSearched);
   const latestBlocksForChain: Record<number, number> = Object.fromEntries(
     await Promise.all(
       enabledChains.map(async (chainId) => {
@@ -220,12 +222,13 @@ export async function constructSpokePoolClientsWithStartBlocks(
         if (isDefined(toBlockOverride[chainId])) {
           return [chainId, toBlockOverride[chainId]];
         }
-        if (chainId === hubPoolClient.chainId) {
-          return [chainId, hubPoolBlock.number];
-        } else {
-          const toBlock = await getBlockForTimestamp(chainId, hubPoolBlock.timestamp, blockFinder, redis);
+        // if (chainId === hubPoolClient.chainId) {
+        //   return [chainId, hubPoolBlock.number];
+        // } else {
+          // const toBlock = await getBlockForTimestamp(chainId, hubPoolBlock.timestamp, blockFinder, redis);
+          const toBlock = await getBlockForTimestamp(chainId, Math.round(Date.now()/1000), blockFinder, redis);
           return [chainId, toBlock];
-        }
+        // }
       })
     )
   );
@@ -278,7 +281,8 @@ export function getSpokePoolClientsForContract(
     spokePoolClients[chainId] = new SpokePoolClient(
       logger,
       contract,
-      hubPoolClient,
+      // hubPoolClient,
+      null,
       chainId,
       registrationBlock,
       spokePoolClientSearchSettings

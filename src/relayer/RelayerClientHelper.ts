@@ -74,8 +74,8 @@ export async function constructRelayerClients(
   const hubPoolLookBack = sdkUtils.chainIsProd(config.hubPoolChainId) ? 3600 * 8 : Number.POSITIVE_INFINITY;
   const commonClients = await constructClients(logger, config, baseSigner, hubPoolLookBack);
   const { configStoreClient, hubPoolClient } = commonClients;
-  await updateClients(commonClients, config, logger);
-  await hubPoolClient.update();
+  // await updateClients(commonClients, config, logger);
+  // await hubPoolClient.update();
 
   // If both origin and destination chains are configured, then limit the SpokePoolClients instantiated to the
   // sum of them. Otherwise, do not specify the chains to be instantiated to inherit one SpokePoolClient per
@@ -137,7 +137,7 @@ export async function constructRelayerClients(
     config.relayerMessageGasMultiplier,
     config.relayerGasPadding
   );
-  await profitClient.update();
+  // await profitClient.update();
 
   const monitoredAddresses = [signerAddr];
   const adapterManager = new AdapterManager(
@@ -151,7 +151,7 @@ export async function constructRelayerClients(
     logger,
     commonClients,
     spokePoolClients,
-    configStoreClient.getChainIdIndicesForBlock(),
+    config.relayerDestinationChains,
     config.blockRangeEndBlockBuffer
   );
 
@@ -188,14 +188,14 @@ export async function updateRelayerClients(clients: RelayerClients, config: Rela
   // https://github.com/across-protocol/relayer/pull/37/files#r883371256 as a reference.
   await updateSpokePoolClients(spokePoolClients, [
     "V3FundsDeposited",
-    "RequestedSpeedUpV3Deposit",
+    // "RequestedSpeedUpV3Deposit",
     "FilledV3Relay",
-    "RelayedRootBundle",
-    "ExecutedRelayerRefundRoot",
+    // "RelayedRootBundle",
+    // "ExecutedRelayerRefundRoot",
   ]);
 
   // Update the token client first so that inventory client has latest balances.
-  await clients.tokenClient.update();
+  // await clients.tokenClient.update();
 
   // We can update the inventory client in parallel with checking for eth wrapping as these do not depend on each other.
   // Cross-chain deposit tracking produces duplicates in looping mode, so in that case don't attempt it. This does not
@@ -205,7 +205,7 @@ export async function updateRelayerClients(clients: RelayerClients, config: Rela
   const inventoryChainIds =
     config.pollingDelay === 0 ? Object.values(spokePoolClients).map(({ chainId }) => chainId) : [];
   await Promise.all([
-    clients.acrossApiClient.update(config.ignoreLimits),
+    // clients.acrossApiClient.update(config.ignoreLimits),
     clients.inventoryClient.update(inventoryChainIds),
     clients.inventoryClient.wrapL2EthIfAboveThreshold(),
     clients.inventoryClient.setL1TokenApprovals(),

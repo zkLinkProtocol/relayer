@@ -26,6 +26,7 @@ export class CommonConfig {
   // State we'll load after we update the config store client and fetch all chains we want to support.
   public multiCallChunkSize: { [chainId: number]: number } = {};
   public toBlockOverride: Record<number, number> = {};
+  public spokePoolConfig = {};
 
   constructor(env: ProcessEnv) {
     const {
@@ -79,6 +80,17 @@ export class CommonConfig {
     const _arweaveGateway = isDefined(ARWEAVE_GATEWAY) ? JSON.parse(ARWEAVE_GATEWAY ?? "{}") : DEFAULT_ARWEAVE_GATEWAY;
     assert(ArweaveGatewayInterfaceSS.is(_arweaveGateway), "Invalid Arweave gateway");
     this.arweaveGateway = _arweaveGateway;
+
+    this.spokePoolConfig = {
+      810181: {
+        "address": "0x0E3ddE1638CD35256E0C7B91ceAE27c53cE493C5",
+        "registrationBlock": 216533,
+      },
+      421614: {
+        "address": "0x703e9BC872d3b8900b132F5f4609fAeE80fc3418",
+        "registrationBlock": 64052749,
+      }
+    };
   }
 
   /**

@@ -4,6 +4,28 @@ import { BigNumberish, utils as ethersUtils } from "ethers";
 import { CHAIN_IDs, TOKEN_SYMBOLS_MAP } from "@across-protocol/constants";
 import { L1Token } from "../interfaces";
 const { ZERO_ADDRESS } = constants;
+const tokens = {
+  810181: {
+    "0x65e3d497f0Bd78657B08AbB2a41aA7edc5404553": {
+      symbol: "WBTC",
+      decimals: 18
+    },
+    "0x3d5D2cc9dd20fb85B3B92DbD13BbCF343aA68292": {
+      symbol: "USDC",
+      decimals: 18
+    }
+  },
+  421614: {
+    "0x8d7b54AAc168585bdf8d7c7c34DD903CdAe388E8": {
+      symbol: "WBTC",
+      decimals: 18
+    },
+    "0xc6118f9FAFc657EBd36D167A50B46a1A9dA2D057": {
+      symbol: "USDC",
+      decimals: 18
+    }
+  }
+};
 
 export const { fetchTokenInfo } = utils;
 
@@ -20,16 +42,18 @@ export function getEthAddressForChain(chainId: number): string {
 export function getTokenInfo(l2TokenAddress: string, chainId: number): L1Token {
   // @dev This might give false positives if tokens on different networks have the same address. I'm not sure how
   // to get around this...
-  const tokenObject = Object.values(TOKEN_SYMBOLS_MAP).find(({ addresses }) => addresses[chainId] === l2TokenAddress);
-  if (!tokenObject) {
-    throw new Error(
-      `TokenUtils#getTokenInfo: Unable to resolve token in TOKEN_SYMBOLS_MAP for ${l2TokenAddress} on chain ${chainId}`
-    );
-  }
+  // const tokenObject = Object.values(TOKEN_SYMBOLS_MAP).find(({ addresses }) => addresses[chainId] === l2TokenAddress);
+  // if (!tokenObject) {
+  //   throw new Error(
+  //     `TokenUtils#getTokenInfo: Unable to resolve token in TOKEN_SYMBOLS_MAP for ${l2TokenAddress} on chain ${chainId}`
+  //   );
+  // }
   return {
     address: l2TokenAddress,
-    symbol: tokenObject.symbol,
-    decimals: tokenObject.decimals,
+    // symbol: tokenObject.symbol,
+    symbol: tokens[chainId][l2TokenAddress].symbol,
+    // decimals: tokenObject.decimals,
+    decimals: tokens[chainId][l2TokenAddress].decimals,
   };
 }
 
