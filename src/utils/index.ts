@@ -49,7 +49,7 @@ export {
   AcrossConfigStore__factory as AcrossConfigStore,
   PolygonTokenBridger__factory as PolygonTokenBridger,
   WETH9__factory as WETH9,
-} from "@across-protocol/contracts";
+} from "@across-protocol/sdk/src/sdk_contracts";
 
 // Utils specifically for this bot.
 export * from "./SDKUtils";

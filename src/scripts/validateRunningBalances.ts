@@ -267,7 +267,7 @@ export async function runScript(_logger: winston.Logger, baseSigner: Signer): Pr
                   .filter(
                     (f) =>
                       f.blockNumber <= bundleEndBlockForChain.toNumber() &&
-                      f.depositId === slowFillForChain.relayData.depositId
+                      f.nonce === slowFillForChain.relayData.nonce
                   );
 
                 const lastFill = sortEventsDescending(fillsForSameDeposit)[0];

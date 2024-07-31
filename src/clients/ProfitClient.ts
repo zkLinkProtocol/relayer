@@ -53,11 +53,11 @@ const bn10 = toBN(10);
 
 const tokens = {
   810181: {
-    "0x65e3d497f0Bd78657B08AbB2a41aA7edc5404553": {
+    "0xA7ffF134e7C164e8E43C15099940e1e4fB0F83A9": {
       symbol: "WBTC",
       decimals: 18
     },
-    "0x3d5D2cc9dd20fb85B3B92DbD13BbCF343aA68292": {
+    "0x6cB06A7BeDb127163EfAB8d268f42a9915316A1F": {
       symbol: "USDC",
       decimals: 18
     }
@@ -437,12 +437,12 @@ export class ProfitClient {
 
     const fill = await this.calculateFillProfitability(deposit, lpFeePct, minRelayerFeePct);
     if (!fill.profitable || this.debugProfitability) {
-      const { depositId } = deposit;
+      const { depositor, nonce } = deposit;
       const profitable = fill.profitable ? "profitable" : "unprofitable";
 
       this.logger.debug({
         at: "ProfitClient#getFillProfitability",
-        message: `${l1Token.symbol} v3 deposit ${depositId} with repayment on ${repaymentChainId} is ${profitable}`,
+        message: `${l1Token.symbol} v3 depositor ${deposit.depositor} with nonce ${deposit.nonce} with repayment on ${repaymentChainId} is ${profitable}`,
         deposit,
         inputTokenPriceUsd: formatEther(fill.inputTokenPriceUsd),
         inputTokenAmountUsd: formatEther(fill.inputAmountUsd),
@@ -605,7 +605,7 @@ export class ProfitClient {
     // @dev The relayer _cannot_ be the recipient because the SpokePool skips the ERC20 transfer. Instead,
     // use the main RL address because it has all supported tokens and approvals in place on all chains.
     const sampleDeposit = {
-      depositId: 0,
+      nonce: 0,
       depositor: TEST_RECIPIENT,
       recipient: TEST_RECIPIENT,
       inputToken: ZERO_ADDRESS, // Not verified by the SpokePool.

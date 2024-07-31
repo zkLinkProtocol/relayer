@@ -402,7 +402,7 @@ export function generateMarkdownForRootBundle(
     assert(
       inputAmount.gte(updatedOutputAmount),
       "Unexpected output amount for slow fill on" +
-        ` ${getNetworkName(leaf.relayData.originChainId)} depositId ${leaf.relayData.depositId}`
+        ` ${getNetworkName(leaf.relayData.originChainId)} nonce ${leaf.relayData.nonce}`
     );
 
     // @todo: When v2 types are removed, update the slowFill definition to be more precise about the member fields.
@@ -412,7 +412,7 @@ export function generateMarkdownForRootBundle(
       recipient: shortenHexString(leaf.relayData.recipient),
       originChainId: leaf.relayData.originChainId.toString(),
       destinationChainId: destinationChainId.toString(),
-      depositId: leaf.relayData.depositId.toString(),
+      nonce: leaf.relayData.nonce.toString(),
       message: leaf.relayData.message,
       // Fee decimals is always 18. 1e18 = 100% so 1e16 = 1%.
       realizedLpFeePct: `${formatFeePct(lpFeePct)}%`,

@@ -123,7 +123,7 @@ export async function setRedisKey(
 }
 
 export function getRedisDepositKey(depositOrFill: Deposit | Fill): string {
-  return `deposit_${depositOrFill.originChainId}_${depositOrFill.depositId}`;
+  return `deposit_${depositOrFill.originChainId}_${depositOrFill.depositor}_${depositOrFill.nonce}`;
 }
 
 export async function setDeposit(

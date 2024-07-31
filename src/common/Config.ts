@@ -83,12 +83,12 @@ export class CommonConfig {
 
     this.spokePoolConfig = {
       810181: {
-        "address": "0x0E3ddE1638CD35256E0C7B91ceAE27c53cE493C5",
-        "registrationBlock": 216533,
+        "address": "0x0D35f5a3f04eAf7C261392f3355936dacC7947De",
+        "registrationBlock": 220114,
       },
       421614: {
-        "address": "0x703e9BC872d3b8900b132F5f4609fAeE80fc3418",
-        "registrationBlock": 64052749,
+        "address": "0x02f960de294354ACE37F4591817173161680545D",
+        "registrationBlock": 64759174,
       }
     };
   }

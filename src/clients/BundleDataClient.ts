@@ -299,14 +299,14 @@ export class BundleDataClient {
           if (this.spokePoolClients[fill.originChainId] === undefined) {
             return false;
           }
-          const matchingDeposit = this.spokePoolClients[fill.originChainId].getDeposit(fill.depositId);
+          const matchingDeposit = this.spokePoolClients[fill.originChainId].getDeposit(fill.depositor, fill.nonce);
           const hasMatchingDeposit =
             matchingDeposit !== undefined &&
             this.getRelayHashFromEvent(fill) === this.getRelayHashFromEvent(matchingDeposit);
           return hasMatchingDeposit;
         })
         .forEach((fill) => {
-          const matchingDeposit = this.spokePoolClients[fill.originChainId].getDeposit(fill.depositId);
+          const matchingDeposit = this.spokePoolClients[fill.originChainId].getDeposit(fill.depositor, fill.nonce);
           assert(isDefined(matchingDeposit));
           const { chainToSendRefundTo, repaymentToken } = getRefundInformationFromFill(
             fill,
@@ -1230,7 +1230,7 @@ export class BundleDataClient {
   // spoke pool contract. However, this internal function is used to uniquely identify a bridging event
   // for speed since its easier to build a string from the event data than to hash it.
   private getRelayHashFromEvent(event: V3DepositWithBlock | V3FillWithBlock | SlowFillRequestWithBlock): string {
-    return `${event.depositor}-${event.recipient}-${event.exclusiveRelayer}-${event.inputToken}-${event.outputToken}-${event.inputAmount}-${event.outputAmount}-${event.originChainId}-${event.depositId}-${event.fillDeadline}-${event.exclusivityDeadline}-${event.message}-${event.destinationChainId}`;
+    return `${event.depositor}-${event.recipient}-${event.exclusiveRelayer}-${event.inputToken}-${event.outputToken}-${event.inputAmount}-${event.outputAmount}-${event.originChainId}-${event.nonce}-${event.fillDeadline}-${event.exclusivityDeadline}-${event.message}-${event.destinationChainId}`;
   }
 
   async getBundleBlockTimestamps(

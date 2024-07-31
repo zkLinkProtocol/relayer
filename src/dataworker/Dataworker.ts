@@ -1075,7 +1075,7 @@ export class Dataworker {
           const unexecutedLeaves = leavesForChain.filter((leaf) => {
             const executedLeaf = slowFillsForChain.find(
               (event) =>
-                event.originChainId === leaf.relayData.originChainId && event.depositId === leaf.relayData.depositId
+                event.originChainId === leaf.relayData.originChainId && event.nonce === leaf.relayData.nonce
             );
 
             // Only return true if no leaf was found in the list of executed leaves.
@@ -1158,7 +1158,7 @@ export class Dataworker {
       const fill = _.findLast(sortedFills, (fill) => {
         if (
           !(
-            fill.depositId === relayData.depositId &&
+            fill.nonce === relayData.nonce &&
             fill.originChainId === relayData.originChainId &&
             sdkUtils.getRelayDataHash(fill, chainId) === sdkUtils.getRelayDataHash(relayData, slowFillChainId)
           )
@@ -1220,7 +1220,7 @@ export class Dataworker {
               message: "Not executing slow relay leaf due to lack of funds in SpokePool",
               root: slowRelayTree.getHexRoot(),
               bundle: rootBundleId,
-              depositId: slowFill.relayData.depositId,
+              nonce: slowFill.relayData.nonce,
               fromChain: slowFill.relayData.originChainId,
               chainId: destinationChainId,
               token: outputToken,
@@ -1246,7 +1246,7 @@ export class Dataworker {
         `slowRelayRoot: ${slowRelayTree.getHexRoot()}\n` +
         `Origin chain: ${relayData.originChainId}\n` +
         `Destination chain:${chainId}\n` +
-        `Deposit Id: ${relayData.depositId}\n` +
+        `Nonce: ${relayData.nonce}\n` +
         `amount: ${outputAmount.toString()}`;
 
       if (submitExecution) {

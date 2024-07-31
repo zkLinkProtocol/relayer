@@ -6,11 +6,11 @@ import { L1Token } from "../interfaces";
 const { ZERO_ADDRESS } = constants;
 const tokens = {
   810181: {
-    "0x65e3d497f0Bd78657B08AbB2a41aA7edc5404553": {
+    "0xA7ffF134e7C164e8E43C15099940e1e4fB0F83A9": {
       symbol: "WBTC",
       decimals: 18
     },
-    "0x3d5D2cc9dd20fb85B3B92DbD13BbCF343aA68292": {
+    "0x6cB06A7BeDb127163EfAB8d268f42a9915316A1F": {
       symbol: "USDC",
       decimals: 18
     }

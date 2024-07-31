@@ -76,7 +76,8 @@ export function getUnfilledDeposits(
 
   return deposits
     .map((deposit) => {
-      const version = hubPoolClient.configStoreClient.getConfigStoreVersionForTimestamp(deposit.quoteTimestamp);
+      // const version = hubPoolClient.configStoreClient.getConfigStoreVersionForTimestamp(deposit.quoteTimestamp);
+      const version = 0;
       const { unfilledAmount, invalidFills } = destinationClient.getValidUnfilledAmountForDeposit(deposit);
       return { deposit, version, unfilledAmount, invalidFills };
     })

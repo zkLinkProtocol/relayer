@@ -189,10 +189,11 @@ export class IndexedSpokePoolClient extends clients.SpokePoolClient {
     // _unsafe_ to do ad-hoc, since it may interfere with some ongoing relayer computations relying on the
     // depositHashes object. If that's an acceptable risk then it might be preferable to simply assert().
     if (eventName === "V3FundsDeposited") {
-      const { depositId } = event.args;
-      assert(isDefined(depositId));
+      const { depositor, nonce } = event.args;
+      assert(isDefined(depositor));
+      assert(isDefined(nonce));
 
-      const depositHash = this.getDepositHash({ depositId, originChainId: this.chainId });
+      const depositHash = this.getDepositHash({ depositor, nonce, originChainId: this.chainId });
       if (isDefined(this.depositHashes[depositHash])) {
         delete this.depositHashes[depositHash];
         this.logger.warn({
@@ -236,18 +237,18 @@ export class IndexedSpokePoolClient extends clients.SpokePoolClient {
     });
 
     // Find the latest deposit Ids, and if there are no new events, fall back to already stored values.
-    const fundsDeposited = eventsToQuery.indexOf("V3FundsDeposited");
-    const [firstDepositId, latestDepositId] = [
-      events[fundsDeposited].at(0)?.args?.depositId ?? this.getDeposits().at(0) ?? 0,
-      events[fundsDeposited].at(-1)?.args?.depositId ?? this.getDeposits().at(-1) ?? 0,
-    ];
+    // const fundsDeposited = eventsToQuery.indexOf("V3FundsDeposited");
+    // const [firstDepositId, latestDepositId] = [
+    //   events[fundsDeposited].at(0)?.args?.nonce ?? this.getDeposits().at(0) ?? 0,
+    //   events[fundsDeposited].at(-1)?.args?.nonce ?? this.getDeposits().at(-1) ?? 0,
+    // ];
 
     return {
       success: true,
       currentTime: this.pendingCurrentTime,
       oldestTime: this.pendingOldestTime,
-      firstDepositId,
-      latestDepositId,
+      firstDepositId: 0,
+      latestDepositId: 0,
       searchEndBlock: this.pendingBlockNumber,
       events,
     };

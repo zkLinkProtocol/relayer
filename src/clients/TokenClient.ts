@@ -28,11 +28,11 @@ type TokenShortfallType = {
 
 const tokens = {
   810181: [{
-    address: "0x65e3d497f0Bd78657B08AbB2a41aA7edc5404553",
+    address: "0xA7ffF134e7C164e8E43C15099940e1e4fB0F83A9",
     symbol: "WBTC",
     decimals: 18
   },{
-    address: "0x3d5D2cc9dd20fb85B3B92DbD13BbCF343aA68292",
+    address: "0x6cB06A7BeDb127163EfAB8d268f42a9915316A1F",
     symbol: "USDC",
     decimals: 18
   }],
@@ -94,19 +94,19 @@ export class TokenClient {
 
   // If the relayer tries to execute a relay but does not have enough tokens to fully fill it it will capture the
   // shortfall by calling this method. This will track the information for logging purposes and use in other clients.
-  captureTokenShortfall(chainId: number, token: string, depositId: number, unfilledAmount: BigNumber): void {
+  captureTokenShortfall(chainId: number, token: string, depositor: string, nonce: number, unfilledAmount: BigNumber): void {
     // Shortfall is the previous shortfall + the current unfilledAmount from this deposit.
     const totalRequirement = this.getShortfallTotalRequirement(chainId, token).add(unfilledAmount);
 
-    // Deposits are the previous shortfall deposits, appended to this depositId.
-    const deposits = [...this.getShortfallDeposits(chainId, token), depositId];
+    // Deposits are the previous shortfall deposits, appended to this nonce.
+    const deposits = [...this.getShortfallDeposits(chainId, token), depositor, nonce];
     assign(this.tokenShortfall, [chainId, token], { deposits, totalRequirement });
   }
 
   captureTokenShortfallForFill(deposit: V3Deposit): void {
     const { outputAmount: unfilledAmount } = deposit;
     this.logger.debug({ at: "TokenBalanceClient", message: "Handling token shortfall", deposit, unfilledAmount });
-    this.captureTokenShortfall(deposit.destinationChainId, deposit.outputToken, deposit.depositId, unfilledAmount);
+    this.captureTokenShortfall(deposit.destinationChainId, deposit.outputToken, deposit.depositor, deposit.nonce, unfilledAmount);
   }
 
   // Returns the total token shortfall the client has seen. Shortfall is defined as the difference between the total

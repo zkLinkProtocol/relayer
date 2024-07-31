@@ -41,7 +41,7 @@ const V3RelayDataSS = {
   originChainId: number(),
   depositor: string(),
   recipient: string(),
-  depositId: number(),
+  nonce: number(),
   message: string(),
 };
 

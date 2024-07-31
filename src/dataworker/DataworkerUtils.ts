@@ -183,11 +183,11 @@ export function _buildSlowRelayRoot(bundleSlowFillsV3: BundleSlowFills): {
   });
 
   // Sort leaves deterministically so that the same root is always produced from the same loadData return value.
-  // The { Deposit ID, origin chain ID } is guaranteed to be unique so we can sort on them.
+  // The { Nonce, origin chain ID } is guaranteed to be unique so we can sort on them.
   const sortedLeaves = [...slowRelayLeaves].sort((relayA, relayB) => {
     // Note: Smaller ID numbers will come first
     if (relayA.relayData.originChainId === relayB.relayData.originChainId) {
-      return relayA.relayData.depositId - relayB.relayData.depositId;
+      return relayA.relayData.nonce - relayB.relayData.nonce;
     } else {
       return relayA.relayData.originChainId - relayB.relayData.originChainId;
     }
@@ -212,7 +212,7 @@ function buildV3SlowFillLeaf(deposit: interfaces.Deposit, lpFeePct: BigNumber): 
       inputAmount: deposit.inputAmount,
       outputAmount: deposit.outputAmount,
       originChainId: deposit.originChainId,
-      depositId: deposit.depositId,
+      nonce: deposit.nonce,
       fillDeadline: deposit.fillDeadline,
       exclusivityDeadline: deposit.exclusivityDeadline,
       message: deposit.message,

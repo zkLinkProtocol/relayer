@@ -419,7 +419,7 @@ export class InventoryClient {
     if (!this.validateOutputToken(deposit)) {
       const [srcChain, dstChain] = [getNetworkName(originChainId), getNetworkName(destinationChainId)];
       throw new Error(
-        `Unexpected ${dstChain} output token on ${srcChain} deposit ${deposit.depositId}` +
+        `Unexpected ${dstChain} output token on ${srcChain} depositor ${deposit.depositor} with nonce ${deposit.nonce}` +
           ` (${inputToken} != ${outputToken})`
       );
     }
@@ -525,7 +525,7 @@ export class InventoryClient {
       this.log(
         `Evaluated taking repayment on ${
           _chain === originChainId ? "origin" : _chain === destinationChainId ? "destination" : "slow withdrawal"
-        } chain ${_chain} for deposit ${deposit.depositId}: ${
+        } chain ${_chain} for depositor ${deposit.depositor} with nonce ${deposit.nonce}: ${
           expectedPostRelayAllocation.lte(thresholdPct) ? "UNDERALLOCATED ✅" : "OVERALLOCATED ❌"
         }`,
         {
@@ -557,7 +557,7 @@ export class InventoryClient {
     if (deposit.fromLiteChain && (eligibleRefundChains.length !== 1 || !eligibleRefundChains.includes(originChainId))) {
       this.logger.warn({
         at: "InventoryClient#determineRefundChainId",
-        message: `Deposit ${deposit.depositId} originated on lite chain ${originChainId} and origin chain is over-allocated. Refusing to fill deposit.`,
+        message: `Depositor ${deposit.depositor} with nonce ${deposit.nonce} originated on lite chain ${originChainId} and origin chain is over-allocated. Refusing to fill deposit.`,
         eligibleRefundChains,
       });
       return [];

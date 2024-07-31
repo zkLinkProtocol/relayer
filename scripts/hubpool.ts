@@ -1,5 +1,5 @@
 import minimist from "minimist";
-import { WETH9__factory as WETH9 } from "@across-protocol/contracts";
+import { WETH9__factory as WETH9 } from "@across-protocol/sdk/src/sdk_contracts";
 import { constants as sdkConsts } from "@across-protocol/sdk";
 import { BigNumber, ethers, Signer } from "ethers";
 import { config } from "dotenv";
