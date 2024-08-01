@@ -34,7 +34,7 @@ export async function constructDataworkerClients(
   await hubPoolClient.update();
 
   // We don't pass any spoke pool clients to token client since data worker doesn't need to set approvals for L2 tokens.
-  const tokenClient = new TokenClient(logger, signerAddr, {}, hubPoolClient);
+  const tokenClient = new TokenClient(logger, signerAddr, {}, hubPoolClient, config.hubpoolTokens);
   await tokenClient.update();
   // Run approval on hub pool.
   if (config.sendingTransactionsEnabled) {

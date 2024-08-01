@@ -22,11 +22,13 @@ export class CommonConfig {
   readonly blockRangeEndBlockBuffer: { [chainId: number]: number };
   readonly timeToCache: number;
   readonly arweaveGateway: ArweaveGatewayInterface;
+  readonly spokePoolConfig: { [chainId: number]: {} };
+  readonly fillTokens: { [chainId: number]: {} };
+  readonly hubpoolTokens: { [chainId: number]: [] };
 
   // State we'll load after we update the config store client and fetch all chains we want to support.
   public multiCallChunkSize: { [chainId: number]: number } = {};
   public toBlockOverride: Record<number, number> = {};
-  public spokePoolConfig = {};
 
   constructor(env: ProcessEnv) {
     const {
@@ -43,6 +45,9 @@ export class CommonConfig {
       ACROSS_MAX_CONFIG_VERSION,
       HUB_POOL_TIME_TO_CACHE,
       ARWEAVE_GATEWAY,
+      SPOKE_POOL_CONFIG,
+      FILL_TOKENS,
+      HUBPOOL_TOKENS
     } = env;
 
     this.version = ACROSS_BOT_VERSION ?? "unknown";
@@ -80,17 +85,9 @@ export class CommonConfig {
     const _arweaveGateway = isDefined(ARWEAVE_GATEWAY) ? JSON.parse(ARWEAVE_GATEWAY ?? "{}") : DEFAULT_ARWEAVE_GATEWAY;
     assert(ArweaveGatewayInterfaceSS.is(_arweaveGateway), "Invalid Arweave gateway");
     this.arweaveGateway = _arweaveGateway;
-
-    this.spokePoolConfig = {
-      810181: {
-        "address": "0x0D35f5a3f04eAf7C261392f3355936dacC7947De",
-        "registrationBlock": 220114,
-      },
-      421614: {
-        "address": "0x02f960de294354ACE37F4591817173161680545D",
-        "registrationBlock": 64759174,
-      }
-    };
+    this.spokePoolConfig = JSON.parse(SPOKE_POOL_CONFIG);
+    this.fillTokens = JSON.parse(FILL_TOKENS);
+    this.hubpoolTokens = JSON.parse(HUBPOOL_TOKENS);
   }
 
   /**

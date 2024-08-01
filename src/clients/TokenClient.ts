@@ -26,27 +26,6 @@ type TokenShortfallType = {
   [chainId: number]: { [token: string]: { deposits: number[]; totalRequirement: BigNumber } };
 };
 
-const tokens = {
-  810181: [{
-    address: "0xA7ffF134e7C164e8E43C15099940e1e4fB0F83A9",
-    symbol: "WBTC",
-    decimals: 18
-  },{
-    address: "0x6cB06A7BeDb127163EfAB8d268f42a9915316A1F",
-    symbol: "USDC",
-    decimals: 18
-  }],
-  421614: [{
-    address: "0x8d7b54AAc168585bdf8d7c7c34DD903CdAe388E8",
-    symbol: "WBTC",
-    decimals: 18
-  },{
-    address: "0xc6118f9FAFc657EBd36D167A50B46a1A9dA2D057",
-    symbol: "USDC",
-    decimals: 18
-  }]
-};
-
 export class TokenClient {
   tokenData: TokenDataType = {};
   tokenShortfall: TokenShortfallType = {};
@@ -55,7 +34,8 @@ export class TokenClient {
     readonly logger: winston.Logger,
     readonly relayerAddress: string,
     readonly spokePoolClients: { [chainId: number]: SpokePoolClient },
-    readonly hubPoolClient: HubPoolClient
+    readonly hubPoolClient: HubPoolClient,
+    readonly hubpoolTokens: { [chainId: number]: [] }
   ) {}
 
   getAllTokenData(): TokenDataType {
@@ -237,7 +217,7 @@ export class TokenClient {
 
     const multicall3 = await sdkUtils.getMulticall3(chainId, spokePool.provider);
     if (!isDefined(multicall3)) {
-      hubPoolTokens = tokens[chainId];
+      hubPoolTokens = this.hubpoolTokens[chainId];
       return this.fetchTokenData(chainId, hubPoolTokens);
     }
 

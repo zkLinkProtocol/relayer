@@ -335,6 +335,7 @@ export async function constructClients(
   const hubPoolClient = new HubPoolClient(
     logger,
     hubPool,
+    config.fillTokens,
     configStoreClient,
     hubPoolDeploymentBlock,
     config.hubPoolChainId,

@@ -5,7 +5,7 @@ import { config } from "dotenv";
 import { Contract, ethers, Signer } from "ethers";
 import { LogDescription } from "@ethersproject/abi";
 import { constants as sdkConsts, utils as sdkUtils } from "@across-protocol/sdk";
-import { ExpandedERC20__factory as ERC20 } from "@across-protocol/sdk/src/sdk_contracts";
+import { ExpandedERC20__factory as ERC20 } from "@across-protocol/contracts";
 import {
   BigNumber,
   formatFeePct,

@@ -51,29 +51,6 @@ const { getNativeTokenSymbol, isMessageEmpty, resolveDepositMessage } = sdkUtils
 
 const bn10 = toBN(10);
 
-const tokens = {
-  810181: {
-    "0xA7ffF134e7C164e8E43C15099940e1e4fB0F83A9": {
-      symbol: "WBTC",
-      decimals: 18
-    },
-    "0x6cB06A7BeDb127163EfAB8d268f42a9915316A1F": {
-      symbol: "USDC",
-      decimals: 18
-    }
-  },
-  421614: {
-    "0x8d7b54AAc168585bdf8d7c7c34DD903CdAe388E8": {
-      symbol: "WBTC",
-      decimals: 18
-    },
-    "0xc6118f9FAFc657EBd36D167A50B46a1A9dA2D057": {
-      symbol: "USDC",
-      decimals: 18
-    }
-  }
-};
-
 // @note All FillProfit BigNumbers are scaled to 18 decimals unless specified otherwise.
 export type FillProfit = {
   inputTokenPriceUsd: BigNumber;
@@ -136,7 +113,8 @@ export class ProfitClient {
     readonly debugProfitability = false,
     protected gasMultiplier = toBNWei(constants.DEFAULT_RELAYER_GAS_MULTIPLIER),
     protected gasMessageMultiplier = toBNWei(constants.DEFAULT_RELAYER_GAS_MESSAGE_MULTIPLIER),
-    protected gasPadding = toBNWei(constants.DEFAULT_RELAYER_GAS_PADDING)
+    protected gasPadding = toBNWei(constants.DEFAULT_RELAYER_GAS_PADDING),
+    readonly fillTokens: { [chainId: number]: {} }
   ) {
     // Require 0% <= gasPadding <= 200%
     assert(
@@ -422,7 +400,7 @@ export class ProfitClient {
     //     `ProfitClient#getFillAmountInUsd missing l1TokenInfo for deposit with origin token: ${inputToken}`
     //   );
     // }
-    const l1TokenInfo = tokens[deposit.destinationChainId][deposit.outputToken];
+    const l1TokenInfo = this.fillTokens[deposit.destinationChainId][deposit.outputToken];
     const tokenPriceInUsd = this.getPriceOfToken(l1TokenInfo.symbol);
     return fillAmount.mul(tokenPriceInUsd).div(bn10.pow(l1TokenInfo.decimals));
   }
