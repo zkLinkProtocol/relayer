@@ -47,7 +47,6 @@ export class CommonConfig {
       ARWEAVE_GATEWAY,
       SPOKE_POOL_CONFIG,
       FILL_TOKENS,
-      HUBPOOL_TOKENS
     } = env;
 
     this.version = ACROSS_BOT_VERSION ?? "unknown";
@@ -85,9 +84,22 @@ export class CommonConfig {
     const _arweaveGateway = isDefined(ARWEAVE_GATEWAY) ? JSON.parse(ARWEAVE_GATEWAY ?? "{}") : DEFAULT_ARWEAVE_GATEWAY;
     assert(ArweaveGatewayInterfaceSS.is(_arweaveGateway), "Invalid Arweave gateway");
     this.arweaveGateway = _arweaveGateway;
+
     this.spokePoolConfig = JSON.parse(SPOKE_POOL_CONFIG);
     this.fillTokens = JSON.parse(FILL_TOKENS);
-    this.hubpoolTokens = JSON.parse(HUBPOOL_TOKENS);
+    this.hubpoolTokens = Object.keys(this.fillTokens).reduce(
+      (hubpoolTokens, chainId) => {
+        hubpoolTokens[chainId] = Object.keys(this.fillTokens[chainId]).reduce(
+          (chainTokens, token) => {
+            chainTokens.push({
+              'address': token,
+              'symbol': this.fillTokens[chainId][token]['symbol'],
+              'decimals': this.fillTokens[chainId][token]['decimals']
+            });
+            return chainTokens;
+          }, []);
+        return hubpoolTokens;
+      }, {});
   }
 
   /**
