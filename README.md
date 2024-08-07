@@ -4,7 +4,7 @@ This code is a fork of [Across V3 Relayer](https://github.com/across-protocol/re
 
 ## How to run a Relayer
 
-Check out [this guide](https://docs.across.to/relayers/running-a-relayer) for detailed bot instructions!
+Check out [this guide](./running-a-relayer.md) for detailed bot instructions!
 
 ## Prerequisites
 
@@ -53,19 +53,3 @@ yarn lint-fix
 ```
 
 Read through [CONTRIBUTING.md](https://github.com/UMAprotocol/protocol/blob/master/CONTRIBUTING.md) for a general overview of our contribution process. These guidelines are shared between the UMA and Across codebases because they were built originally by the same teams.
-
-## Branching Model
-
-### Active Branches
-
-| Branch                                                           | Status           |
-| ---------------------------------------------------------------- | ---------------- |
-| [master](https://github.com/across-protocol/relayer/tree/master) | Accepts all PRs. |
-
-### Overview
-
-Longer term we'd ideally like to follow [this Git branching model](https://nvie.com/posts/a-successful-git-branching-model/), but for now we manually trigger GitHub releases to demarcate features that we'd like to "release" for public usage.
-
-### Production branch
-
-Our production branch is `master` and releases are only made from `master`.
