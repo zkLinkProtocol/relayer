@@ -237,8 +237,8 @@ export class RelayerConfig extends CommonConfig {
     this.sendingRebalancesEnabled = SEND_REBALANCES === "true";
     this.sendingMessageRelaysEnabled = SEND_MESSAGE_RELAYS === "true";
     this.skipRelays = SKIP_RELAYS === "true";
-    this.skipRebalancing = SKIP_REBALANCING === "true";
-    this.sendingSlowRelaysEnabled = SEND_SLOW_RELAYS === "true";
+    this.skipRebalancing = true;
+    this.sendingSlowRelaysEnabled = false;
     this.acceptInvalidFills = ACCEPT_INVALID_FILLS === "true";
 
     const minDepositConfirmations = MIN_DEPOSIT_CONFIRMATIONS
