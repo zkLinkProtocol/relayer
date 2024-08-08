@@ -25,6 +25,8 @@ export class CommonConfig {
   readonly spokePoolConfig: { [chainId: number]: {} };
   readonly fillTokens: { [chainId: number]: {} };
   readonly hubpoolTokens: { [chainId: number]: [] };
+  readonly refundRecipient: string;
+  readonly l2Recipient: string;
 
   // State we'll load after we update the config store client and fetch all chains we want to support.
   public multiCallChunkSize: { [chainId: number]: number } = {};
@@ -47,6 +49,8 @@ export class CommonConfig {
       ARWEAVE_GATEWAY,
       SPOKE_POOL_CONFIG,
       FILL_TOKENS,
+      REFUND_RECIPIENT,
+      L2_RECIPIENT
     } = env;
 
     this.version = ACROSS_BOT_VERSION ?? "unknown";
@@ -100,6 +104,9 @@ export class CommonConfig {
           }, []);
         return hubpoolTokens;
       }, {});
+    
+    this.refundRecipient = REFUND_RECIPIENT;
+    this.l2Recipient = L2_RECIPIENT;
   }
 
   /**

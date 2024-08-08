@@ -41,6 +41,8 @@ export class Relayer {
   private pendingTxnReceipts: { [chainId: number]: Promise<TransactionResponse[]> } = {};
 
   private hubPoolBlockBuffer: number;
+  private refundRecipient: string;
+  private l2Recipient: string
 
   constructor(
     relayerAddress: string,
@@ -62,6 +64,8 @@ export class Relayer {
     });
 
     this.relayerAddress = getAddress(relayerAddress);
+    this.refundRecipient = config.refundRecipient ?? this.relayerAddress;
+    this.l2Recipient = config.l2Recipient ?? this.relayerAddress;
   }
 
   /**
@@ -367,7 +371,7 @@ export class Relayer {
       // const { relayerFeePct, gasCost, gasLimit: _gasLimit, lpFeePct: realizedLpFeePct } = repaymentChainProfitability;
       // if (isDefined(repaymentChainId)) {
         // const gasLimit = isMessageEmpty(resolveDepositMessage(deposit)) ? undefined : _gasLimit;
-        this.fillRelay(deposit, lpFees[0]["paymentChainId"], lpFees[0]["lpFeePct"], undefined);
+        this.fillRelay(deposit, lpFees[0]["paymentChainId"], lpFees[0]["lpFeePct"], this.refundRecipient, this.l2Recipient, undefined);
 
         // Update local balance to account for the enqueued fill.
         tokenClient.decrementLocalBalance(destinationChainId, deposit.outputToken, deposit.outputAmount);
@@ -391,7 +395,7 @@ export class Relayer {
       // relayer is both the depositor and the recipient, because a deposit on a cheap SpokePool chain could cause
       // expensive fills on (for example) mainnet.
       const { lpFeePct } = lpFees.find((lpFee) => lpFee.paymentChainId === destinationChainId);
-      this.fillRelay(deposit, destinationChainId, lpFeePct);
+      this.fillRelay(deposit, destinationChainId, lpFeePct, this.refundRecipient, this.l2Recipient);
     } else {
       // TokenClient.getBalance returns that we don't have enough balance to submit the fast fill.
       // At this point, capture the shortfall so that the inventory manager can rebalance the token inventory.
@@ -624,7 +628,7 @@ export class Relayer {
     });
   }
 
-  fillRelay(deposit: V3Deposit, repaymentChainId: number, realizedLpFeePct: BigNumber, gasLimit?: BigNumber): void {
+  fillRelay(deposit: V3Deposit, repaymentChainId: number, realizedLpFeePct: BigNumber, refundRecipient: string, l2Recipient: string, gasLimit?: BigNumber): void {
     const { spokePoolClients, multiCallerClient } = this.clients;
     this.logger.debug({
       at: "Relayer::fillRelay",
@@ -640,10 +644,12 @@ export class Relayer {
       `Lite chain deposits must be filled on its origin chain (${deposit.originChainId}). Depositor: ${deposit.depositor} and Nonce: ${deposit.nonce}.`
     );
 
-    gasLimit = gasLimit ?? ethersUtils.parseUnits("2000000", "wei");
+    const l2TxGasLimit = gasLimit ?? ethersUtils.parseUnits("2000000", "wei");
+    const l2GasPerPubdataByteLimit = ethersUtils.parseUnits("800", "wei");
+    // const value = ethersUtils.parseEther("0.0005");
 
     const [method, messageModifier, args] = !isDepositSpedUp(deposit)
-      ? ["testFillv3Relay", "", [deposit, repaymentChainId, gasLimit]]
+      ? ["fillRelay", "", [deposit, repaymentChainId, l2TxGasLimit, l2GasPerPubdataByteLimit, refundRecipient, l2Recipient]]
       : [
           "fillV3RelayWithUpdatedDeposit",
           " with updated parameters ",
@@ -661,8 +667,7 @@ export class Relayer {
     const mrkdwn = this.constructRelayFilledMrkdwn(deposit, repaymentChainId, realizedLpFeePct);
     const contract = spokePoolClients[deposit.destinationChainId].spokePool;
     const chainId = deposit.destinationChainId;
-    const value = ethersUtils.parseEther("0.0005");
-    multiCallerClient.enqueueTransaction({ contract, chainId, method, args, gasLimit, message, mrkdwn, value });
+    multiCallerClient.enqueueTransaction({ contract, chainId, method, args, gasLimit, message, mrkdwn });
   }
 
   /**

@@ -143,7 +143,8 @@ export async function constructRelayerClients(
   const monitoredAddresses = [signerAddr];
   const adapterManager = new AdapterManager(
     logger,
-    spokePoolClients,
+    // spokePoolClients,
+    {},
     hubPoolClient,
     monitoredAddresses.filter(() => sdkUtils.isDefined)
   );

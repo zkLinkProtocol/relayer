@@ -213,33 +213,33 @@ export class TokenClient {
     chainId: number,
     hubPoolTokens: L1Token[]
   ): Promise<Record<string, { balance: BigNumber; allowance: BigNumber }>> {
-    const { spokePool } = this.spokePoolClients[chainId];
+    // const { spokePool } = this.spokePoolClients[chainId];
 
-    const multicall3 = await sdkUtils.getMulticall3(chainId, spokePool.provider);
-    if (!isDefined(multicall3)) {
+    // const multicall3 = await sdkUtils.getMulticall3(chainId, spokePool.provider);
+    // if (!isDefined(multicall3)) {
       hubPoolTokens = this.hubpoolTokens[chainId];
       return this.fetchTokenData(chainId, hubPoolTokens);
-    }
+    // }
 
-    const { relayerAddress } = this;
-    const balances: sdkUtils.Call3[] = [];
-    const allowances: sdkUtils.Call3[] = [];
-    this.resolveRemoteTokens(chainId, hubPoolTokens).forEach((token) => {
-      balances.push({ contract: token, method: "balanceOf", args: [relayerAddress] });
-      allowances.push({ contract: token, method: "allowance", args: [relayerAddress, spokePool.address] });
-    });
+    // const { relayerAddress } = this;
+    // const balances: sdkUtils.Call3[] = [];
+    // const allowances: sdkUtils.Call3[] = [];
+    // this.resolveRemoteTokens(chainId, hubPoolTokens).forEach((token) => {
+    //   balances.push({ contract: token, method: "balanceOf", args: [relayerAddress] });
+    //   allowances.push({ contract: token, method: "allowance", args: [relayerAddress, spokePool.address] });
+    // });
 
-    const calls = [...balances, ...allowances];
-    const results = await sdkUtils.aggregate(multicall3, calls);
+    // const calls = [...balances, ...allowances];
+    // const results = await sdkUtils.aggregate(multicall3, calls);
 
-    const allowanceOffset = balances.length;
-    const balanceInfo = Object.fromEntries(
-      balances.map(({ contract: { address } }, idx) => {
-        return [address, { balance: results[idx][0], allowance: results[allowanceOffset + idx][0] }];
-      })
-    );
+    // const allowanceOffset = balances.length;
+    // const balanceInfo = Object.fromEntries(
+    //   balances.map(({ contract: { address } }, idx) => {
+    //     return [address, { balance: results[idx][0], allowance: results[allowanceOffset + idx][0] }];
+    //   })
+    // );
 
-    return balanceInfo;
+    // return balanceInfo;
   }
 
   async update(): Promise<void> {

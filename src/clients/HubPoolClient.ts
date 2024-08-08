@@ -8,11 +8,11 @@ import { L1Token } from "../interfaces";
 export type LpFeeRequest = clients.LpFeeRequest;
 
 export class HubPoolClient extends clients.HubPoolClient {
-  readonly filledTokens: { [chainId: number]: {} };
+  readonly fillTokens: { [chainId: number]: {} };
   constructor(
     logger: winston.Logger,
     hubPool: Contract,
-    filledTokens: { [chainId: number]: {} },
+    fillTokens: { [chainId: number]: {} },
     configStoreClient: clients.AcrossConfigStoreClient,
     deploymentBlock?: number,
     chainId = CHAIN_IDs.MAINNET,
@@ -34,7 +34,7 @@ export class HubPoolClient extends clients.HubPoolClient {
       },
       cachingMechanism
     );
-    this.filledTokens = filledTokens;
+    this.fillTokens = fillTokens;
   }
 
   /**
@@ -50,11 +50,19 @@ export class HubPoolClient extends clients.HubPoolClient {
     // if (tokenInfo.symbol.toLowerCase() === "usdc" && chain !== this.chainId) {
     //   tokenInfo.symbol = getUsdcSymbol(tokenAddress, chain) ?? "UNKNOWN";
     // }
-    return {
-      address: tokenAddress,
-      symbol: this.filledTokens[chain][tokenAddress].symbol,
-      decimals: this.filledTokens[chain][tokenAddress].decimals,
-    };
+    if (this.fillTokens[chain][tokenAddress]) {
+      return {
+        address: tokenAddress,
+        symbol: this.fillTokens[chain][tokenAddress].symbol,
+        decimals: this.fillTokens[chain][tokenAddress].decimals,
+      };
+    } else {
+      return {
+        address: tokenAddress,
+        symbol: "UNKNOWN:" + chain + "|" + tokenAddress,
+        decimals: 18,
+      }
+    }
   }
 
   /**

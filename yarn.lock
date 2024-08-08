@@ -32,7 +32,7 @@
 
 "@across-protocol/contracts@https://github.com/zksemi/across_contracts.git":
   version "3.0.5"
-  resolved "https://github.com/zksemi/across_contracts.git#e5d6f11a42e1058da3aaffee59fe51f08ec6cc16"
+  resolved "https://github.com/zksemi/across_contracts.git#246ff950d45159c3a8de36ec2ade39cd2542c69d"
   dependencies:
     "@across-protocol/constants" "^3.1.5"
     "@defi-wonderland/smock" "^2.3.4"
@@ -51,7 +51,7 @@
 
 "@across-protocol/sdk@https://github.com/zksemi/across_sdk.git":
   version "3.1.11"
-  resolved "https://github.com/zksemi/across_sdk.git#0e1944c74d633e48f0bc7ea93995a42dceaa7e3b"
+  resolved "https://github.com/zksemi/across_sdk.git#826d268681ba90585a007bc5e76d2d7bf382524e"
   dependencies:
     "@across-protocol/across-token" "^1.0.0"
     "@across-protocol/constants" "^3.1.5"
