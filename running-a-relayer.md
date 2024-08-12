@@ -11,8 +11,8 @@ The zkLink Relayer is implemented in Node.js and is capable of running on a vari
 ## Installation
 ```bash
 # Clone relayer code with Github CLI or git clone.
-git clone https://github.com/zksemi/across_relayer
-cd across_relayer
+git clone https://github.com/zkLinkProtocol/relayer
+cd relayer
 
 # Establish environment file and restrict filesystem permissions.
 cp .env.example .env
@@ -47,7 +47,7 @@ A helper script is available to automate updates. This performs the following ac
 - Flushes any existing installed dependencies.
 - Pulls down the latest relayer commit.
 - Installs all dependencies and builds the relayer.
-- Displays the latest commit in the relayer-v3 repository.
+- Displays the latest commit in the repository.
 ### Important
 This update helper is offered as a convenience. After update, the operator must manually verify that the update succeeded and that the commit shown matches the intended target.
 ```bash
@@ -68,3 +68,8 @@ When you feel ready to run the relayer and send your first relay, set SEND_RELAY
 
 ## Which account will be used to send transactions?
 When running with a MNEMONIC configured, the first account associated with the MNEMONIC set in the environment will be used. Be sure to add ETH and any token balances to its account so that it can send relays.
+
+## Rebalancing between different blockchains
+Currently, automatic rebalancing is not available, users have to manually swap tokens between different blockchains. The relayer will log the following warning message when a token shortage occurs.
+Shortfall on {chain}
+{token} cumulative shortfall of {amount}

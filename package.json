@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@across-protocol/constants": "^3.1.6",
-    "@across-protocol/sdk": "https://github.com/zksemi/across_sdk.git",
-    "@across-protocol/contracts": "https://github.com/zksemi/across_contracts.git",
+    "@across-protocol/sdk": "https://github.com/zkLinkProtocol/relayer_sdk.git",
+    "@across-protocol/contracts": "https://github.com/zkLinkProtocol/relayer_contracts.git",
     "@arbitrum/sdk": "^3.1.3",
     "@consensys/linea-sdk": "^0.2.1",
     "@defi-wonderland/smock": "^2.3.5",

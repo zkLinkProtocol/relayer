@@ -19,12 +19,6 @@ Start the `redis` server in a separate window:
 redis-server
 ```
 
-When running the bot, be sure to set the following environment variable
-
-```sh
-REDIS_URL=redis://localhost:6379
-```
-
 ## Installation
 
 ```sh

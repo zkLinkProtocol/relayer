@@ -30,9 +30,9 @@
     "@openzeppelin/contracts" "4.1.0"
     "@uma/core" "^2.18.0"
 
-"@across-protocol/contracts@https://github.com/zksemi/across_contracts.git":
+"@across-protocol/contracts@https://github.com/zkLinkProtocol/relayer_contracts.git":
   version "3.0.5"
-  resolved "https://github.com/zksemi/across_contracts.git#246ff950d45159c3a8de36ec2ade39cd2542c69d"
+  resolved "https://github.com/zkLinkProtocol/relayer_contracts.git#246ff950d45159c3a8de36ec2ade39cd2542c69d"
   dependencies:
     "@across-protocol/constants" "^3.1.5"
     "@defi-wonderland/smock" "^2.3.4"
@@ -49,13 +49,13 @@
     axios "^1.6.2"
     zksync-web3 "^0.14.3"
 
-"@across-protocol/sdk@https://github.com/zksemi/across_sdk.git":
+"@across-protocol/sdk@https://github.com/zkLinkProtocol/relayer_sdk.git":
   version "3.1.11"
-  resolved "https://github.com/zksemi/across_sdk.git#826d268681ba90585a007bc5e76d2d7bf382524e"
+  resolved "https://github.com/zkLinkProtocol/relayer_sdk.git#0dbd2709028d08cd9cb547f9ff2eaaa54c27f6c3"
   dependencies:
     "@across-protocol/across-token" "^1.0.0"
     "@across-protocol/constants" "^3.1.5"
-    "@across-protocol/contracts" "https://github.com/zksemi/across_contracts.git"
+    "@across-protocol/contracts" "https://github.com/zkLinkProtocol/relayer_contracts.git"
     "@eth-optimism/sdk" "^3.3.1"
     "@pinata/sdk" "^2.1.0"
     "@types/mocha" "^10.0.1"
