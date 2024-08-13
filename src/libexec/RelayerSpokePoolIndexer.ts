@@ -25,7 +25,6 @@ import {
   sortEventsAscending,
   winston,
 } from "../utils";
-import { Console } from "console";
 
 type WebSocketProvider = ethersProviders.WebSocketProvider;
 type EventSearchConfig = sdkUtils.EventSearchConfig;
@@ -174,14 +173,14 @@ async function listen(
   // ethers block subscription drops most useful information, notably the timestamp for new blocks.
   // The "official unofficial" strategy is to use an internal provider method to subscribe.
   // See also: https://github.com/ethers-io/ethers.js/discussions/1951#discussioncomment-1229670
-  await providers[0]._subscribe("newHeads", ["newHeads"], ({ number: blockNumber, timestamp: currentTime }) => {
-    [blockNumber, currentTime] = [parseInt(blockNumber), parseInt(currentTime)];
-    const events = eventMgr.tick(blockNumber);
+  // await providers[0]._subscribe("newHeads", ["newHeads"], ({ number: blockNumber, timestamp: currentTime }) => {
+  //   [blockNumber, currentTime] = [parseInt(blockNumber), parseInt(currentTime)];
+  //   const events = eventMgr.tick(blockNumber);
 
-    // Post an update to the parent. Do this irrespective of whether there were new events or not, since there's
-    // information in blockNumber and currentTime alone.
-    postEvents(blockNumber, currentTime, events);
-  });
+  //   Post an update to the parent. Do this irrespective of whether there were new events or not, since there's
+  //   information in blockNumber and currentTime alone.
+  //   postEvents(blockNumber, currentTime, events);
+  // });
 
   // Add a handler for each new instance of a subscribed event.
   providers.forEach((provider) => {
@@ -194,8 +193,9 @@ async function listen(
           eventMgr.remove(event, host);
           // Notify the parent immediately in case the event was already submitted.
           removeEvent(event);
-        } else {
+        } else { 
           eventMgr.add(event, host);
+          postEvents(event['blockNumber'], Math.floor(Date.now() / 1000), [event]);
         }
       });
     });
