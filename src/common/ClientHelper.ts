@@ -69,8 +69,8 @@ export async function resolveSpokePoolActivationBlock(
   const blockFinder = undefined;
   const mainnetActivationBlock = hubPoolClient.getSpokePoolActivationBlock(chainId, spokePoolAddr);
   const { timestamp } = await hubPoolClient.hubPool.provider.getBlock(mainnetActivationBlock);
-  const hints = { lowBlock: getDeploymentBlockNumber("SpokePool", chainId) };
-  const activationBlock = await getBlockForTimestamp(chainId, timestamp, blockFinder, redis, hints);
+  // const hints = { lowBlock: getDeploymentBlockNumber("SpokePool", chainId) };
+  const activationBlock = await getBlockForTimestamp(chainId, timestamp, blockFinder, redis, { lowBlock: 0 });
 
   const cacheAfter = 5 * 24 * 3600; // 5 days
   if (isDefined(redis) && getCurrentTime() - timestamp > cacheAfter) {

@@ -58,6 +58,7 @@ export class IndexedSpokePoolClient extends clients.SpokePoolClient {
       fromBlock: deploymentBlock,
       maxBlockLookBack: CHAIN_MAX_BLOCK_LOOKBACK[chainId],
     },
+    readonly lookback: number,
     readonly opts: IndexerOpts
   ) {
     super(logger, spokePool, hubPoolClient, chainId, deploymentBlock, eventSearchConfig);
@@ -80,15 +81,14 @@ export class IndexedSpokePoolClient extends clients.SpokePoolClient {
    */
   protected startWorker(): void {
     const {
-      finality,
       eventSearchConfig: { fromBlock, maxBlockLookBack: blockRange },
     } = this;
-    const opts = { finality, blockRange, lookback: `@${fromBlock}` };
+    const opts = { blockRange };
 
     const args = Object.entries(opts)
       .map(([k, v]) => [`--${k}`, `${v}`])
       .flat();
-    this.worker = spawn("node", [this.indexerPath, "--chainId", this.chainId.toString(), ...args], {
+    this.worker = spawn("node", [this.indexerPath, "--chainId", this.chainId.toString(), "--spokePoolAddr", this.spokePool.address, "--deploymentBlock", this.deploymentBlock.toString(), "--lookback", this.lookback.toString(), ...args], {
       stdio: ["ignore", "inherit", "inherit", "ipc"],
     });
 

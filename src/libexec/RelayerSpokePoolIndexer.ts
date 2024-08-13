@@ -2,6 +2,7 @@ import assert from "assert";
 import minimist from "minimist";
 import { setTimeout } from "node:timers/promises";
 import { Contract, Event, EventFilter, providers as ethersProviders, utils as ethersUtils } from "ethers";
+import * as contracts from "@across-protocol/contracts";
 import { utils as sdkUtils } from "@across-protocol/sdk";
 import * as utils from "../../scripts/utils";
 import { SpokePoolClientMessage } from "../clients";
@@ -24,6 +25,7 @@ import {
   sortEventsAscending,
   winston,
 } from "../utils";
+import { Console } from "console";
 
 type WebSocketProvider = ethersProviders.WebSocketProvider;
 type EventSearchConfig = sdkUtils.EventSearchConfig;
@@ -209,15 +211,17 @@ async function listen(
  */
 async function run(argv: string[]): Promise<void> {
   const minimistOpts = {
-    string: ["lookback", "relayer"],
+    string: ["relayer", "spokePoolAddr"],
   };
   const args = minimist(argv, minimistOpts);
-
-  const { chainId, finality = 32, lookback = "5400", relayer = null, maxBlockRange = 10_000 } = args;
+  
+  const { chainId, spokePoolAddr, deploymentBlock, finality = 32, lookback = 5400, relayer = null, maxBlockRange = 10_000 } = args;
   assert(Number.isInteger(chainId), "chainId must be numeric ");
+  assert(Number.isInteger(deploymentBlock), "registrationBlock must be numeric ");
   assert(Number.isInteger(finality), "finality must be numeric ");
   assert(Number.isInteger(maxBlockRange), "maxBlockRange must be numeric");
   assert(!isDefined(relayer) || ethersUtils.isAddress(relayer), `relayer address is invalid (${relayer})`);
+  assert(!isDefined(spokePoolAddr) || ethersUtils.isAddress(spokePoolAddr), `spoke pool address is invalid (${spokePoolAddr})`);
 
   const { quorum = getChainQuorum(chainId) } = args;
   assert(Number.isInteger(quorum), "quorum must be numeric ");
@@ -229,19 +233,19 @@ async function run(argv: string[]): Promise<void> {
   const cache = await getRedisCache();
   const latestBlock = await quorumProvider.getBlock("latest");
 
-  const deploymentBlock = getDeploymentBlockNumber("SpokePool", chainId);
+  // const deploymentBlock = getDeploymentBlockNumber("SpokePool", chainId);
   let startBlock: number;
-  if (/^@[0-9]+$/.test(lookback)) {
-    // Lookback to a specific block (lookback = @<block-number>).
-    startBlock = Number(lookback.slice(1));
-  } else {
+  // if (/^@[0-9]+$/.test(lookback)) {
+  //   // Lookback to a specific block (lookback = @<block-number>).
+  //   startBlock = Number(lookback.slice(1));
+  // } else {
     // Resolve `lookback` seconds from head to a specific block.
     assert(Number.isInteger(Number(lookback)), `Invalid lookback (${lookback})`);
     startBlock = Math.max(
       deploymentBlock,
       await getBlockForTimestamp(chainId, latestBlock.timestamp - lookback, blockFinder, cache)
     );
-  }
+  // }
 
   const opts = {
     finality,
@@ -253,7 +257,8 @@ async function run(argv: string[]): Promise<void> {
   };
 
   logger.debug({ at: "RelayerSpokePoolIndexer::run", message: `Starting ${chain} SpokePool Indexer.`, opts });
-  const spokePool = await utils.getSpokePoolContract(chainId);
+  // const spokePool = await utils.getSpokePoolContract(chainId);
+  const spokePool = await new Contract(spokePoolAddr, contracts.SpokePool__factory.abi)
 
   process.on("SIGHUP", () => {
     logger.debug({ at: "Relayer#run", message: `Received SIGHUP in ${chain} listener, stopping...` });
@@ -274,8 +279,10 @@ async function run(argv: string[]): Promise<void> {
     oldestTime = (await spokePool.getCurrentTime({ blockTag })).toNumber();
   };
 
+  // Events to listen for.
+  const events = ["V3FundsDeposited", "FilledV3Relay"];
+
   if (lookback > 0) {
-    const events = ["V3FundsDeposited", "FilledV3Relay", "RelayedRootBundle", "ExecutedRelayerRefundRoot"];
     const _spokePool = spokePool.connect(quorumProvider);
     await Promise.all([
       resolveOldestTime(_spokePool, startBlock),
@@ -286,8 +293,6 @@ async function run(argv: string[]): Promise<void> {
   // If no lookback was specified then default to the timestamp of the latest block.
   oldestTime ??= latestBlock.timestamp;
 
-  // Events to listen for.
-  const events = ["V3FundsDeposited", "RequestedSpeedUpV3Deposit", "FilledV3Relay"];
   const eventMgr = new EventManager(logger, chainId, finality, quorum);
   do {
     let providers: WebSocketProvider[] = [];

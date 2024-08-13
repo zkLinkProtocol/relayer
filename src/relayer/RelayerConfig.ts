@@ -248,11 +248,11 @@ export class RelayerConfig extends CommonConfig {
     // Transform deposit confirmation requirements into an array of ascending
     // deposit confirmations, sorted by the corresponding threshold in USD.
     this.minDepositConfirmations = {};
-    if (this.hubPoolChainId !== CHAIN_IDs.MAINNET) {
-      // Sub in permissive defaults for testnet.
-      const standardConfig = { usdThreshold: toBNWei(Number.MAX_SAFE_INTEGER), minConfirmations: 1 };
-      Object.values(TESTNET_CHAIN_IDs).forEach((chainId) => (this.minDepositConfirmations[chainId] = [standardConfig]));
-    } else {
+    // if (this.hubPoolChainId !== CHAIN_IDs.MAINNET) {
+    //   // Sub in permissive defaults for testnet.
+    //   const standardConfig = { usdThreshold: toBNWei(Number.MAX_SAFE_INTEGER), minConfirmations: 1 };
+    //   Object.values(TESTNET_CHAIN_IDs).forEach((chainId) => (this.minDepositConfirmations[chainId] = [standardConfig]));
+    // } else {
       Object.keys(minDepositConfirmations)
         .map((_threshold) => {
           const threshold = Number(_threshold);
@@ -286,7 +286,7 @@ export class RelayerConfig extends CommonConfig {
           });
         }
       });
-    }
+    // }
 
     this.ignoreLimits = RELAYER_IGNORE_LIMITS === "true";
   }

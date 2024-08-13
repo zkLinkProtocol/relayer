@@ -34,28 +34,32 @@ async function indexedSpokePoolClient(
   baseSigner: Signer,
   hubPoolClient: HubPoolClient,
   chainId: number,
-  opts: IndexerOpts & { lookback: number; blockRange: number }
+  opts: IndexerOpts & { lookback: number; blockRange: number; spokePoolAddr: string; registrationBlock: number }
 ): Promise<IndexedSpokePoolClient> {
   const { logger } = hubPoolClient;
 
   // Set up Spoke signers and connect them to spoke pool contract objects.
   const signer = baseSigner.connect(await getProvider(chainId));
-  const spokePoolAddr = hubPoolClient.getSpokePoolForBlock(chainId);
+  // const spokePoolAddr = hubPoolClient.getSpokePoolForBlock(chainId);
+  const spokePoolAddr = opts.spokePoolAddr;
 
   const blockFinder = undefined;
   const redis = await getRedisCache(hubPoolClient.logger);
   const [activationBlock, fromBlock] = await Promise.all([
-    resolveSpokePoolActivationBlock(chainId, hubPoolClient),
+    // resolveSpokePoolActivationBlock(chainId, spokePoolAddr, hubPoolClient),
+    opts.registrationBlock,
     getBlockForTimestamp(chainId, getCurrentTime() - opts.lookback, blockFinder, redis),
   ]);
 
   const spokePoolClient = new IndexedSpokePoolClient(
     logger,
     SpokePool.connect(spokePoolAddr, signer),
-    hubPoolClient,
+    // hubPoolClient,
+    null,
     chainId,
     activationBlock,
     { fromBlock, maxBlockLookBack: opts.blockRange },
+    opts.lookback,
     opts
   );
 
@@ -92,8 +96,10 @@ export async function constructRelayerClients(
         const finality = config.minDepositConfirmations[chainId].at(0)?.minConfirmations ?? 1024;
         const opts = {
           finality,
+          spokePoolAddr: config.spokePoolConfig[chainId]["address"],
           lookback: config.maxRelayerLookBack,
           blockRange: config.maxBlockLookBack[chainId],
+          registrationBlock: config.spokePoolConfig[chainId]["registrationBlock"]
         };
         return [chainId, await indexedSpokePoolClient(baseSigner, hubPoolClient, chainId, opts)];
       })
