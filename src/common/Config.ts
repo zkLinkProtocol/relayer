@@ -76,7 +76,6 @@ export class CommonConfig {
     this.maxRelayerLookBack = Number(MAX_RELAYER_DEPOSIT_LOOK_BACK ?? Constants.MAX_RELAYER_DEPOSIT_LOOK_BACK);
     this.hubPoolChainId = Number(HUB_CHAIN_ID ?? CHAIN_IDs.MAINNET);
     this.pollingDelay = Number(POLLING_DELAY ?? 60);
-    this.spokePoolChainsOverride = SPOKE_POOL_CHAINS_OVERRIDE ? JSON.parse(SPOKE_POOL_CHAINS_OVERRIDE) : [];
     this.maxBlockLookBack = MAX_BLOCK_LOOK_BACK ? JSON.parse(MAX_BLOCK_LOOK_BACK) : {};
     if (Object.keys(this.maxBlockLookBack).length === 0) {
       this.maxBlockLookBack = Constants.CHAIN_MAX_BLOCK_LOOKBACK;
@@ -104,7 +103,7 @@ export class CommonConfig {
           }, []);
         return hubpoolTokens;
       }, {});
-    
+    this.spokePoolChainsOverride = Object.keys(this.spokePoolConfig).map(Number);
     this.refundRecipient = REFUND_RECIPIENT;
     this.l2Recipient = L2_RECIPIENT;
   }
