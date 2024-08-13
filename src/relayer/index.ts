@@ -78,17 +78,21 @@ export async function runRelayer(_logger: winston.Logger, baseSigner: Signer): P
 
       if (loop) {
         const runTime = Math.round((performance.now() - tLoopStart) / 1000);
-        logger.debug({
-          at: "Relayer#run",
-          message: `Completed relayer execution loop ${run++} in ${runTime} seconds.`,
-        });
+        if (!config.externalIndexer) {
+          logger.debug({
+            at: "Relayer#run",
+            message: `Completed relayer execution loop ${run++} in ${runTime} seconds.`,
+          });
+        }
 
         if (!stop && runTime < config.pollingDelay) {
           const delta = config.pollingDelay - runTime;
-          logger.debug({
-            at: "relayer#run",
-            message: `Waiting ${delta} s before next loop.`,
-          });
+          if (!config.externalIndexer) {
+            logger.debug({
+              at: "relayer#run",
+              message: `Waiting ${delta} s before next loop.`,
+            });
+          }
           await delay(delta);
         }
       }

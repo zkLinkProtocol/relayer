@@ -521,10 +521,12 @@ export class Relayer {
       .flat()
       .map(({ deposit }) => deposit);
 
-    this.logger.debug({
-      at: "Relayer::checkForUnfilledDepositsAndFill",
-      message: `${allUnfilledDeposits.length} unfilled deposits found.`,
-    });
+    if (!this.config.externalIndexer || allUnfilledDeposits.length > 0) {
+      this.logger.debug({
+        at: "Relayer::checkForUnfilledDepositsAndFill",
+        message: `${allUnfilledDeposits.length} unfilled deposits found.`,
+      });
+    }
     if (allUnfilledDeposits.length === 0) {
       return txnReceipts;
     }
