@@ -6,11 +6,11 @@ import {
   MerkleTree,
   buildRelayerRefundTree,
   EMPTY_MERKLE_ROOT,
-  SpokePool,
   toBNWei,
   toBN,
   buildPoolRebalanceLeafTree,
 } from "../src/utils";
+import { typechain } from "@across-protocol/sdk";
 
 function prettyRelayerRefundLeaf(leaves: RelayerRefundLeaf[]) {
   return leaves.map((leaf) => {
@@ -57,7 +57,7 @@ export async function run(): Promise<void> {
 
   // 2. Get ABI encoded function signature to relay roots to spoke pools:
   // The following address is the Optimism_SpokePool but could be any chain's SpokePool.
-  const spokePool = new ethers.Contract("0xa420b2d1c0841415a695b81e5b867bcd07dff8c9", SpokePool.abi, baseSigner);
+  const spokePool = new ethers.Contract("0xa420b2d1c0841415a695b81e5b867bcd07dff8c9", typechain.SpokePool__factory.abi, baseSigner);
   const abiEncodedFunctionData = spokePool.interface.encodeFunctionData("relayRootBundle", [
     relayerRefundRoot.getHexRoot(),
     EMPTY_MERKLE_ROOT,

@@ -9,11 +9,11 @@ import {
   ethers,
   getBlockForTimestamp,
   getCurrentTime,
-  SpokePool,
   isDefined,
   getRedisCache,
   getArweaveJWKSigner,
 } from "../utils";
+import { typechain } from "@across-protocol/sdk";
 import { HubPoolClient, MultiCallerClient, ConfigStoreClient, SpokePoolClient } from "../clients";
 import { CommonConfig } from "./Config";
 import { SpokePoolClientsByChain } from "../interfaces";
@@ -205,7 +205,7 @@ export async function constructSpokePoolClientsWithStartBlocks(
     enabledChains.map(async (chainId) => {
       // const spokePoolAddr = hubPoolClient.getSpokePoolForBlock(chainId, toBlockOverride[1]);
       const spokePoolAddr = config.spokePoolConfig[chainId]["address"];
-      const spokePoolContract = SpokePool.connect(spokePoolAddr, spokePoolSigners[chainId]);
+      const spokePoolContract = typechain.SpokePool__factory.connect(spokePoolAddr, spokePoolSigners[chainId]);
       // const registrationBlock = await resolveSpokePoolActivationBlock(chainId, hubPoolClient, toBlockOverride[1]);
       const registrationBlock = config.spokePoolConfig[chainId]["registrationBlock"];
       return { chainId, contract: spokePoolContract, registrationBlock };

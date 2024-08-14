@@ -45,7 +45,6 @@ export {
   getDeployedBlockNumber,
   ExpandedERC20__factory as ERC20,
   HubPool__factory as HubPool,
-  SpokePool__factory as SpokePool,
   AcrossConfigStore__factory as AcrossConfigStore,
   PolygonTokenBridger__factory as PolygonTokenBridger,
   WETH9__factory as WETH9,

@@ -2,7 +2,7 @@ import assert from "assert";
 import minimist from "minimist";
 import { setTimeout } from "node:timers/promises";
 import { Contract, Event, EventFilter, providers as ethersProviders, utils as ethersUtils } from "ethers";
-import * as contracts from "@across-protocol/contracts";
+import { typechain } from "@across-protocol/sdk";
 import { utils as sdkUtils } from "@across-protocol/sdk";
 import * as utils from "../../scripts/utils";
 import { SpokePoolClientMessage } from "../clients";
@@ -258,7 +258,7 @@ async function run(argv: string[]): Promise<void> {
 
   logger.debug({ at: "RelayerSpokePoolIndexer::run", message: `Starting ${chain} SpokePool Indexer.`, opts });
   // const spokePool = await utils.getSpokePoolContract(chainId);
-  const spokePool = await new Contract(spokePoolAddr, contracts.SpokePool__factory.abi)
+  const spokePool = new Contract(spokePoolAddr, typechain.SpokePool__factory.abi)
 
   process.on("SIGHUP", () => {
     logger.debug({ at: "Relayer#run", message: `Received SIGHUP in ${chain} listener, stopping...` });

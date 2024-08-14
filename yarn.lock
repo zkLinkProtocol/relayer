@@ -21,16 +21,7 @@
   resolved "https://registry.yarnpkg.com/@across-protocol/constants/-/constants-3.1.6.tgz#42a5ae488979ea6f6d27d836217f0c0aa2c278bc"
   integrity sha512-LIlIG0udtwWaoutkPGYhH/wVEWqEyRGr/1Qk5dN/VEopaeCuRLFFOjGh2aR8PVhH6PwLyX9EvrBKqELwBG76hA==
 
-"@across-protocol/contracts@^0.1.4":
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/@across-protocol/contracts/-/contracts-0.1.4.tgz#64b3d91e639d2bb120ea94ddef3d160967047fa5"
-  integrity sha512-y9FVRSFdPgEdGWBcf8rUmmzdYhzGdy0752HwpaAFtMJ1pn+HFgNaI0EZc/UudMKIPOkk+/BxPIHYPy7tKad5/A==
-  dependencies:
-    "@eth-optimism/contracts" "^0.5.5"
-    "@openzeppelin/contracts" "4.1.0"
-    "@uma/core" "^2.18.0"
-
-"@across-protocol/contracts@https://github.com/zkLinkProtocol/relayer_contracts.git":
+"@across-protocol/contracts@3.0.5":
   version "3.0.5"
   resolved "https://github.com/zkLinkProtocol/relayer_contracts.git#246ff950d45159c3a8de36ec2ade39cd2542c69d"
   dependencies:
@@ -49,13 +40,22 @@
     axios "^1.6.2"
     zksync-web3 "^0.14.3"
 
+"@across-protocol/contracts@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@across-protocol/contracts/-/contracts-0.1.4.tgz#64b3d91e639d2bb120ea94ddef3d160967047fa5"
+  integrity sha512-y9FVRSFdPgEdGWBcf8rUmmzdYhzGdy0752HwpaAFtMJ1pn+HFgNaI0EZc/UudMKIPOkk+/BxPIHYPy7tKad5/A==
+  dependencies:
+    "@eth-optimism/contracts" "^0.5.5"
+    "@openzeppelin/contracts" "4.1.0"
+    "@uma/core" "^2.18.0"
+
 "@across-protocol/sdk@https://github.com/zkLinkProtocol/relayer_sdk.git":
   version "3.1.11"
-  resolved "https://github.com/zkLinkProtocol/relayer_sdk.git#0dbd2709028d08cd9cb547f9ff2eaaa54c27f6c3"
+  resolved "https://github.com/zkLinkProtocol/relayer_sdk.git#35673c5571c66323b1026d09ce5d084bd0aeaeb0"
   dependencies:
     "@across-protocol/across-token" "^1.0.0"
     "@across-protocol/constants" "^3.1.5"
-    "@across-protocol/contracts" "https://github.com/zkLinkProtocol/relayer_contracts.git"
+    "@across-protocol/contracts" "3.0.5"
     "@eth-optimism/sdk" "^3.3.1"
     "@pinata/sdk" "^2.1.0"
     "@types/mocha" "^10.0.1"

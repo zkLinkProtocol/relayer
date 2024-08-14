@@ -19,7 +19,8 @@ import {
   updateSpokePoolClients,
 } from "../common";
 import { SpokePoolClientsByChain } from "../interfaces";
-import { getBlockForTimestamp, getCurrentTime, getProvider, getRedisCache, Signer, SpokePool } from "../utils";
+import { getBlockForTimestamp, getCurrentTime, getProvider, getRedisCache, Signer } from "../utils";
+import { typechain } from "@across-protocol/sdk";
 import { RelayerConfig } from "./RelayerConfig";
 
 export interface RelayerClients extends Clients {
@@ -53,7 +54,7 @@ async function indexedSpokePoolClient(
 
   const spokePoolClient = new IndexedSpokePoolClient(
     logger,
-    SpokePool.connect(spokePoolAddr, signer),
+    typechain.SpokePool__factory.connect(spokePoolAddr, signer),
     // hubPoolClient,
     null,
     chainId,

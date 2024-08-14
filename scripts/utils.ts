@@ -2,6 +2,7 @@ import assert from "assert";
 import { Contract, ethers, utils as ethersUtils } from "ethers";
 import readline from "readline";
 import * as contracts from "@across-protocol/contracts";
+import { typechain } from "@across-protocol/sdk";
 import { utils as sdkUtils } from "@across-protocol/sdk";
 import { getDeployedContract, getNodeUrlList, CHAIN_IDs } from "../src/utils";
 
@@ -130,6 +131,6 @@ export async function getSpokePoolContract(chainId: number): Promise<Contract> {
   const hubPool = await getContract(hubChainId, "HubPool");
   const spokePoolAddr = (await hubPool.crossChainContracts(chainId))[1];
 
-  const contract = new Contract(spokePoolAddr, contracts.SpokePool__factory.abi);
+  const contract = new Contract(spokePoolAddr, typechain.SpokePool__factory.abi);
   return contract;
 }
