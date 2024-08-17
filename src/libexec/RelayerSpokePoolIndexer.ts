@@ -64,7 +64,7 @@ function getEventFilter(contract: Contract, eventName: string, filterArgs?: stri
 function getEventFilterArgs(relayer?: string): { [event: string]: string[] } {
   const FilledV3Relay = !isDefined(relayer)
     ? undefined
-    : [null, null, null, null, null, null, null, null, null, null, relayer];
+    : [null, null, null, null, null, null, null, null, null, null, null, null, relayer];
 
   return { FilledV3Relay };
 }
@@ -280,7 +280,7 @@ async function run(argv: string[]): Promise<void> {
   };
 
   // Events to listen for.
-  const events = ["V3FundsDeposited", "FilledV3Relay"];
+  const events = ["IntentCreated", "IntentFilled"];
 
   if (lookback > 0) {
     const _spokePool = spokePool.connect(quorumProvider);

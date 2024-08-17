@@ -204,8 +204,8 @@ function buildV3SlowFillLeaf(deposit: interfaces.Deposit, lpFeePct: BigNumber): 
 
   return {
     relayData: {
-      depositor: deposit.depositor,
-      recipient: deposit.recipient,
+      intentOwner: deposit.intentOwner,
+      intentReceiver: deposit.intentReceiver,
       exclusiveRelayer: deposit.exclusiveRelayer,
       inputToken: deposit.inputToken,
       outputToken: deposit.outputToken,
@@ -215,7 +215,7 @@ function buildV3SlowFillLeaf(deposit: interfaces.Deposit, lpFeePct: BigNumber): 
       nonce: deposit.nonce,
       fillDeadline: deposit.fillDeadline,
       exclusivityDeadline: deposit.exclusivityDeadline,
-      message: deposit.message,
+      payload: deposit.payload,
     },
     chainId: deposit.destinationChainId,
     updatedOutputAmount: deposit.inputAmount.sub(lpFee),
@@ -265,10 +265,10 @@ export function getRefundsFromBundle(
     Object.entries(depositsForChain).forEach(([l2TokenAddress, deposits]) => {
       deposits.forEach((deposit) => {
         if (combinedRefunds[originChainId][l2TokenAddress] === undefined) {
-          combinedRefunds[originChainId][l2TokenAddress] = { [deposit.depositor]: deposit.inputAmount };
+          combinedRefunds[originChainId][l2TokenAddress] = { [deposit.intentOwner]: deposit.inputAmount };
         } else {
-          const existingRefundAmount = combinedRefunds[originChainId][l2TokenAddress][deposit.depositor];
-          combinedRefunds[originChainId][l2TokenAddress][deposit.depositor] = deposit.inputAmount.add(
+          const existingRefundAmount = combinedRefunds[originChainId][l2TokenAddress][deposit.intentOwner];
+          combinedRefunds[originChainId][l2TokenAddress][deposit.intentOwner] = deposit.inputAmount.add(
             existingRefundAmount ?? bnZero
           );
         }

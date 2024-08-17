@@ -267,7 +267,7 @@ export async function runScript(_logger: winston.Logger, baseSigner: Signer): Pr
                   .filter(
                     (f) =>
                       f.blockNumber <= bundleEndBlockForChain.toNumber() &&
-                      f.depositor === slowFillForChain.relayData.depositor &&
+                      f.intentOwner === slowFillForChain.relayData.intentOwner &&
                       f.nonce === slowFillForChain.relayData.nonce
                   );
 

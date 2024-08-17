@@ -170,56 +170,56 @@ export class BundleDataClient {
     return `bundles-${blockRangesForChains}`;
   }
 
-  private async loadPersistedDataFromArweave(
-    blockRangesForChains: number[][]
-  ): Promise<LoadDataReturnValue | undefined> {
-    if (!isDefined(this.clients?.arweaveClient)) {
-      return undefined;
-    }
-    const start = performance.now();
-    const persistedData = await this.clients.arweaveClient.getByTopic(
-      this.getArweaveClientKey(blockRangesForChains),
-      BundleDataSS
-    );
-    // If there is no data or the data is empty, return undefined because we couldn't
-    // pull info from the Arweave persistence layer.
-    if (!isDefined(persistedData) || persistedData.length < 1) {
-      return undefined;
-    }
+  // private async loadPersistedDataFromArweave(
+  //   blockRangesForChains: number[][]
+  // ): Promise<LoadDataReturnValue | undefined> {
+  //   if (!isDefined(this.clients?.arweaveClient)) {
+  //     return undefined;
+  //   }
+  //   const start = performance.now();
+  //   const persistedData = await this.clients.arweaveClient.getByTopic(
+  //     this.getArweaveClientKey(blockRangesForChains),
+  //     BundleDataSS
+  //   );
+  //   // If there is no data or the data is empty, return undefined because we couldn't
+  //   // pull info from the Arweave persistence layer.
+  //   if (!isDefined(persistedData) || persistedData.length < 1) {
+  //     return undefined;
+  //   }
 
-    // A converter function to account for the fact that our SuperStruct schema does not support numeric
-    // keys in records. Fundamentally, this is a limitation of superstruct itself.
-    const convertTypedStringRecordIntoNumericRecord = <UnderlyingType>(
-      data: Record<string, Record<string, UnderlyingType>>
-    ): Record<number, Record<string, UnderlyingType>> =>
-      Object.keys(data).reduce((acc, chainId) => {
-        acc[Number(chainId)] = data[chainId];
-        return acc;
-      }, {} as Record<number, Record<string, UnderlyingType>>);
+  //   // A converter function to account for the fact that our SuperStruct schema does not support numeric
+  //   // keys in records. Fundamentally, this is a limitation of superstruct itself.
+  //   const convertTypedStringRecordIntoNumericRecord = <UnderlyingType>(
+  //     data: Record<string, Record<string, UnderlyingType>>
+  //   ): Record<number, Record<string, UnderlyingType>> =>
+  //     Object.keys(data).reduce((acc, chainId) => {
+  //       acc[Number(chainId)] = data[chainId];
+  //       return acc;
+  //     }, {} as Record<number, Record<string, UnderlyingType>>);
 
-    const data = persistedData[0].data;
-    const bundleData = {
-      bundleFillsV3: convertTypedStringRecordIntoNumericRecord(data.bundleFillsV3),
-      expiredDepositsToRefundV3: convertTypedStringRecordIntoNumericRecord(data.expiredDepositsToRefundV3),
-      bundleDepositsV3: convertTypedStringRecordIntoNumericRecord(data.bundleDepositsV3),
-      unexecutableSlowFills: convertTypedStringRecordIntoNumericRecord(data.unexecutableSlowFills),
-      bundleSlowFillsV3: convertTypedStringRecordIntoNumericRecord(data.bundleSlowFillsV3),
-    };
-    this.logger.debug({
-      at: "BundleDataClient#loadPersistedDataFromArweave",
-      message: `Loaded persisted data from Arweave in ${Math.round(performance.now() - start) / 1000}s.`,
-      blockRanges: JSON.stringify(blockRangesForChains),
-      bundleData: prettyPrintV3SpokePoolEvents(
-        bundleData.bundleDepositsV3,
-        bundleData.bundleFillsV3,
-        [], // Invalid fills are not persisted to Arweave.
-        bundleData.bundleSlowFillsV3,
-        bundleData.expiredDepositsToRefundV3,
-        bundleData.unexecutableSlowFills
-      ),
-    });
-    return bundleData;
-  }
+  //   const data = persistedData[0].data;
+  //   const bundleData = {
+  //     bundleFillsV3: convertTypedStringRecordIntoNumericRecord(data.bundleFillsV3),
+  //     expiredDepositsToRefundV3: convertTypedStringRecordIntoNumericRecord(data.expiredDepositsToRefundV3),
+  //     bundleDepositsV3: convertTypedStringRecordIntoNumericRecord(data.bundleDepositsV3),
+  //     unexecutableSlowFills: convertTypedStringRecordIntoNumericRecord(data.unexecutableSlowFills),
+  //     bundleSlowFillsV3: convertTypedStringRecordIntoNumericRecord(data.bundleSlowFillsV3),
+  //   };
+  //   this.logger.debug({
+  //     at: "BundleDataClient#loadPersistedDataFromArweave",
+  //     message: `Loaded persisted data from Arweave in ${Math.round(performance.now() - start) / 1000}s.`,
+  //     blockRanges: JSON.stringify(blockRangesForChains),
+  //     bundleData: prettyPrintV3SpokePoolEvents(
+  //       bundleData.bundleDepositsV3,
+  //       bundleData.bundleFillsV3,
+  //       [], // Invalid fills are not persisted to Arweave.
+  //       bundleData.bundleSlowFillsV3,
+  //       bundleData.expiredDepositsToRefundV3,
+  //       bundleData.unexecutableSlowFills
+  //     ),
+  //   });
+  //   return bundleData;
+  // }
 
   // @dev This function should probably be moved to the InventoryClient since it bypasses loadData completely now.
   async getPendingRefundsFromValidBundles(): Promise<CombinedRefunds[]> {
@@ -258,7 +258,8 @@ export class BundleDataClient {
     // than use the much slower loadData to compute all refunds. We don't need to consider slow fills or deposit
     // expiries here so we can skip some steps. We also don't need to compute LP fees as they should be small enough
     // so as not to affect this approximate refund count.
-    const arweaveData = await this.loadArweaveData(bundleEvaluationBlockRanges);
+    // const arweaveData = await this.loadArweaveData(bundleEvaluationBlockRanges);
+    const arweaveData = undefined;
     if (arweaveData === undefined) {
       combinedRefunds = this.getApproximateRefundsForBlockRange(chainIds, bundleEvaluationBlockRanges);
     } else {
@@ -299,14 +300,14 @@ export class BundleDataClient {
           if (this.spokePoolClients[fill.originChainId] === undefined) {
             return false;
           }
-          const matchingDeposit = this.spokePoolClients[fill.originChainId].getDeposit(fill.depositor, fill.nonce);
+          const matchingDeposit = this.spokePoolClients[fill.originChainId].getDeposit(fill.intentOwner, fill.nonce);
           const hasMatchingDeposit =
             matchingDeposit !== undefined &&
             this.getRelayHashFromEvent(fill) === this.getRelayHashFromEvent(matchingDeposit);
           return hasMatchingDeposit;
         })
         .forEach((fill) => {
-          const matchingDeposit = this.spokePoolClients[fill.originChainId].getDeposit(fill.depositor, fill.nonce);
+          const matchingDeposit = this.spokePoolClients[fill.originChainId].getDeposit(fill.intentOwner, fill.nonce);
           assert(isDefined(matchingDeposit));
           const { chainToSendRefundTo, repaymentToken } = getRefundInformationFromFill(
             fill,
@@ -449,7 +450,8 @@ export class BundleDataClient {
       // Similar to getAppoximateRefundsForBlockRange, we'll skip the full bundle reconstruction if the arweave
       // data is undefined and use the much faster approximation method which doesn't consider LP fees which is
       // ok for this use case.
-      const arweaveData = await this.loadArweaveData(pendingBundleBlockRanges);
+      // const arweaveData = await this.loadArweaveData(pendingBundleBlockRanges);
+      const arweaveData = undefined;
       if (arweaveData === undefined) {
         combinedRefunds.push(this.getApproximateRefundsForBlockRange(chainIds, pendingBundleBlockRanges));
       } else {
@@ -573,9 +575,9 @@ export class BundleDataClient {
   private async loadArweaveData(blockRangesForChains: number[][]): Promise<LoadDataReturnValue> {
     const arweaveKey = this.getArweaveClientKey(blockRangesForChains);
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    if (!this.arweaveDataCache[arweaveKey]) {
-      this.arweaveDataCache[arweaveKey] = this.loadPersistedDataFromArweave(blockRangesForChains);
-    }
+    // if (!this.arweaveDataCache[arweaveKey]) {
+    //   this.arweaveDataCache[arweaveKey] = this.loadPersistedDataFromArweave(blockRangesForChains);
+    // }
     const arweaveData = _.cloneDeep(await this.arweaveDataCache[arweaveKey]);
     return arweaveData;
   }
@@ -591,12 +593,12 @@ export class BundleDataClient {
     const key = JSON.stringify(blockRangesForChains);
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     if (!this.loadDataCache[key]) {
-      let arweaveData;
-      if (attemptArweaveLoad) {
-        arweaveData = await this.loadArweaveData(blockRangesForChains);
-      } else {
-        arweaveData = undefined;
-      }
+      let arweaveData= undefined;
+      // if (attemptArweaveLoad) {
+      //   arweaveData = await this.loadArweaveData(blockRangesForChains);
+      // } else {
+      //   arweaveData = undefined;
+      // }
       const data = isDefined(arweaveData)
         ? // We can return the data to a Promise to keep the return type consistent.
           // Note: this is now a fast operation since we've already loaded the data from Arweave.
@@ -1230,7 +1232,7 @@ export class BundleDataClient {
   // spoke pool contract. However, this internal function is used to uniquely identify a bridging event
   // for speed since its easier to build a string from the event data than to hash it.
   private getRelayHashFromEvent(event: V3DepositWithBlock | V3FillWithBlock | SlowFillRequestWithBlock): string {
-    return `${event.depositor}-${event.recipient}-${event.exclusiveRelayer}-${event.inputToken}-${event.outputToken}-${event.inputAmount}-${event.outputAmount}-${event.originChainId}-${event.nonce}-${event.fillDeadline}-${event.exclusivityDeadline}-${event.message}-${event.destinationChainId}`;
+    return `${event.intentOwner}-${event.intentReceiver}-${event.inputToken}-${event.outputToken}-${event.inputAmount}-${event.outputAmount}-${event.originChainId}-${event.exclusiveRelayer}-${event.nonce}-${event.fillDeadline}-${event.exclusivityDeadline}-${event.payload}-${event.destinationChainId}`;
   }
 
   async getBundleBlockTimestamps(

@@ -188,12 +188,12 @@ export class IndexedSpokePoolClient extends clients.SpokePoolClient {
     // relayer from filling a deposit where it must wait for additional deposit confirmations. Note that this is
     // _unsafe_ to do ad-hoc, since it may interfere with some ongoing relayer computations relying on the
     // depositHashes object. If that's an acceptable risk then it might be preferable to simply assert().
-    if (eventName === "V3FundsDeposited") {
-      const { depositor, nonce } = event.args;
-      assert(isDefined(depositor));
+    if (eventName === "IntentCreated") {
+      const { intentOwner, nonce } = event.args;
+      assert(isDefined(intentOwner));
       assert(isDefined(nonce));
 
-      const depositHash = this.getDepositHash({ depositor, nonce, originChainId: this.chainId });
+      const depositHash = this.getDepositHash({ intentOwner, nonce, originChainId: this.chainId });
       if (isDefined(this.depositHashes[depositHash])) {
         delete this.depositHashes[depositHash];
         this.logger.warn({
@@ -202,11 +202,11 @@ export class IndexedSpokePoolClient extends clients.SpokePoolClient {
           event,
         });
       }
-    } else if (eventName === "EnabledDepositRoute") {
+    // } else if (eventName === "EnabledDepositRoute") {
       // These are hard to back out because they're not stored with transaction information. They should be extremely
       // rare, but at the margins could risk making an invalid fill based on the resolved outputToken for a deposit
       // that specifies outputToken 0x0. Simply bail in this case; everything should be OK on the next run.
-      throw new Error("Detected re-org affecting deposit route events.");
+      // throw new Error("Detected re-org affecting deposit route events.");
     } else {
       // Retaining any remaining event types should be non-critical for relayer operation. They may
       // produce sub-optimal decisions, but should not affect the correctness of relayer operation.

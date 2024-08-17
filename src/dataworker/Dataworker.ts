@@ -1110,11 +1110,11 @@ export class Dataworker {
     // The original depositor can always execute these and pay for the gas themselves.
     const leaves = _leaves.filter((leaf) => {
       const {
-        relayData: { depositor, recipient, message },
+        relayData: { intentOwner, intentReceiver, payload },
       } = leaf;
 
       // If there is a message, we ignore the leaf and log an error.
-      if (!sdk.utils.isMessageEmpty(message)) {
+      if (!sdk.utils.isMessageEmpty(payload)) {
         const { method, args } = this.encodeV3SlowFillLeaf(slowRelayTree, rootBundleId, leaf);
 
         this.logger.warn({
@@ -1130,13 +1130,13 @@ export class Dataworker {
         ethersUtils.getAddress(address)
       );
       if (
-        ignoredAddresses?.includes(ethersUtils.getAddress(depositor)) ||
-        ignoredAddresses?.includes(ethersUtils.getAddress(recipient))
+        ignoredAddresses?.includes(ethersUtils.getAddress(intentOwner)) ||
+        ignoredAddresses?.includes(ethersUtils.getAddress(intentReceiver))
       ) {
         this.logger.warn({
           at: "Dataworker#_executeSlowFillLeaf",
           message: "Ignoring slow fill.",
-          leafExecutionArgs: [depositor, recipient],
+          leafExecutionArgs: [intentOwner, intentReceiver],
         });
         return false;
       }

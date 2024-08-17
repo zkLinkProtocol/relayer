@@ -50,7 +50,7 @@ export type SetPoolRebalanceRoot = interfaces.SetPoolRebalanceRoot;
 export type PendingRootBundle = interfaces.PendingRootBundle;
 
 // SpokePool interfaces
-export type FundsDepositedEvent = interfaces.FundsDepositedEvent;
+export type FundsDepositedEvent = interfaces.V3FundsDepositedEvent;
 export type Deposit = interfaces.Deposit;
 export type DepositWithBlock = interfaces.DepositWithBlock;
 export type Fill = interfaces.Fill;

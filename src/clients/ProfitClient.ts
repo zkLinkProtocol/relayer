@@ -415,12 +415,12 @@ export class ProfitClient {
 
     const fill = await this.calculateFillProfitability(deposit, lpFeePct, minRelayerFeePct);
     if (!fill.profitable || this.debugProfitability) {
-      const { depositor, nonce } = deposit;
+      const { intentOwner, nonce } = deposit;
       const profitable = fill.profitable ? "profitable" : "unprofitable";
 
       this.logger.debug({
         at: "ProfitClient#getFillProfitability",
-        message: `${l1Token.symbol} v3 depositor ${deposit.depositor} with nonce ${deposit.nonce} with repayment on ${repaymentChainId} is ${profitable}`,
+        message: `${l1Token.symbol} v3 depositor ${deposit.intentOwner} with nonce ${deposit.nonce} with repayment on ${repaymentChainId} is ${profitable}`,
         deposit,
         inputTokenPriceUsd: formatEther(fill.inputTokenPriceUsd),
         inputTokenAmountUsd: formatEther(fill.inputAmountUsd),
@@ -584,8 +584,8 @@ export class ProfitClient {
     // use the main RL address because it has all supported tokens and approvals in place on all chains.
     const sampleDeposit = {
       nonce: 0,
-      depositor: TEST_RECIPIENT,
-      recipient: TEST_RECIPIENT,
+      intentOwner: TEST_RECIPIENT,
+      intentReceiver: TEST_RECIPIENT,
       inputToken: ZERO_ADDRESS, // Not verified by the SpokePool.
       inputAmount: outputAmount.add(bnOne),
       outputToken: "", // SpokePool-specific, overwritten later.
@@ -596,7 +596,7 @@ export class ProfitClient {
       fillDeadline: currentTime + 60,
       exclusivityDeadline: 0,
       exclusiveRelayer: ZERO_ADDRESS,
-      message: EMPTY_MESSAGE,
+      payload: EMPTY_MESSAGE,
       fromLiteChain: false,
       toLiteChain: false,
     };

@@ -196,9 +196,11 @@ export async function updateRelayerClients(clients: RelayerClients, config: Rela
   // having a "first run" update and then a "normal" update that considers this. see previous implementation here
   // https://github.com/across-protocol/relayer/pull/37/files#r883371256 as a reference.
   await updateSpokePoolClients(spokePoolClients, [
-    "V3FundsDeposited",
+    "IntentCreated",
+    "IntentFilled",
+    // "V3FundsDeposited",
     // "RequestedSpeedUpV3Deposit",
-    "FilledV3Relay",
+    // "FilledV3Relay",
     // "RelayedRootBundle",
     // "ExecutedRelayerRefundRoot",
   ]);

@@ -51,7 +51,7 @@
 
 "@across-protocol/sdk@https://github.com/zkLinkProtocol/relayer_sdk.git":
   version "3.1.11"
-  resolved "https://github.com/zkLinkProtocol/relayer_sdk.git#35673c5571c66323b1026d09ce5d084bd0aeaeb0"
+  resolved "https://github.com/zkLinkProtocol/relayer_sdk.git#88d8fd7b4a8a3516499ba652ece3c0ea130d6877"
   dependencies:
     "@across-protocol/across-token" "^1.0.0"
     "@across-protocol/constants" "^3.1.5"

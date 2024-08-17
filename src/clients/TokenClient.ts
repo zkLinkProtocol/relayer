@@ -86,7 +86,7 @@ export class TokenClient {
   captureTokenShortfallForFill(deposit: V3Deposit): void {
     const { outputAmount: unfilledAmount } = deposit;
     this.logger.debug({ at: "TokenBalanceClient", message: "Handling token shortfall", deposit, unfilledAmount });
-    this.captureTokenShortfall(deposit.destinationChainId, deposit.outputToken, deposit.depositor, deposit.nonce, unfilledAmount);
+    this.captureTokenShortfall(deposit.destinationChainId, deposit.outputToken, deposit.intentOwner, deposit.nonce, unfilledAmount);
   }
 
   // Returns the total token shortfall the client has seen. Shortfall is defined as the difference between the total

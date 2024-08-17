@@ -408,12 +408,12 @@ export function generateMarkdownForRootBundle(
     // @todo: When v2 types are removed, update the slowFill definition to be more precise about the member fields.
     const slowFill = {
       // Shorten select keys for ease of reading from Slack.
-      depositor: shortenHexString(leaf.relayData.depositor),
-      recipient: shortenHexString(leaf.relayData.recipient),
+      depositor: shortenHexString(leaf.relayData.intentOwner),
+      recipient: shortenHexString(leaf.relayData.intentReceiver),
       originChainId: leaf.relayData.originChainId.toString(),
       destinationChainId: destinationChainId.toString(),
       nonce: leaf.relayData.nonce.toString(),
-      message: leaf.relayData.message,
+      message: leaf.relayData.payload,
       // Fee decimals is always 18. 1e18 = 100% so 1e16 = 1%.
       realizedLpFeePct: `${formatFeePct(lpFeePct)}%`,
       outputToken,
