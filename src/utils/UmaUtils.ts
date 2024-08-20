@@ -1,13 +1,6 @@
 import { HubPoolClient } from "../clients";
-import { CONTRACT_ADDRESSES } from "../common";
 import { ProposedRootBundle, SortableEvent } from "../interfaces";
-import { Contract, ethers, getBlockForTimestamp, isEventOlder, sortEventsDescending } from ".";
-
-export async function getDvmContract(provider: ethers.providers.Provider): Promise<Contract> {
-  const { chainId } = await provider.getNetwork();
-  const { address, abi } = CONTRACT_ADDRESSES[chainId].VotingV2;
-  return new Contract(address, abi, provider);
-}
+import { Contract, getBlockForTimestamp, isEventOlder, sortEventsDescending } from ".";
 
 export function getDisputedProposal(
   hubPoolClient: HubPoolClient,

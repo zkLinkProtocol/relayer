@@ -1,6 +1,5 @@
 import winston from "winston";
-import { DEFAULT_MULTICALL_CHUNK_SIZE, DEFAULT_CHAIN_MULTICALL_CHUNK_SIZE, DEFAULT_ARWEAVE_GATEWAY } from "../common";
-import { ArweaveGatewayInterface, ArweaveGatewayInterfaceSS } from "../interfaces";
+import { DEFAULT_MULTICALL_CHUNK_SIZE, DEFAULT_CHAIN_MULTICALL_CHUNK_SIZE } from "../common";
 import { assert, CHAIN_IDs, ethers, isDefined } from "../utils";
 import * as Constants from "./Constants";
 
@@ -18,10 +17,8 @@ export class CommonConfig {
   readonly sendingTransactionsEnabled: boolean;
   readonly maxRelayerLookBack: number;
   readonly version: string;
-  readonly maxConfigVersion: number;
   readonly blockRangeEndBlockBuffer: { [chainId: number]: number };
   readonly timeToCache: number;
-  readonly arweaveGateway: ArweaveGatewayInterface;
   readonly spokePoolConfig: { [chainId: number]: {} };
   readonly fillTokens: { [chainId: number]: {} };
   readonly hubpoolTokens: { [chainId: number]: [] };
@@ -42,11 +39,8 @@ export class CommonConfig {
       MAX_BLOCK_LOOK_BACK,
       MAX_TX_WAIT_DURATION,
       SEND_TRANSACTIONS,
-      SPOKE_POOL_CHAINS_OVERRIDE,
       ACROSS_BOT_VERSION,
-      ACROSS_MAX_CONFIG_VERSION,
       HUB_POOL_TIME_TO_CACHE,
-      ARWEAVE_GATEWAY,
       SPOKE_POOL_CONFIG,
       FILL_TOKENS,
       REFUND_RECIPIENT,
@@ -60,12 +54,6 @@ export class CommonConfig {
       throw new Error("Invalid default caching safe lag");
     }
 
-    // Maximum version of the Across ConfigStore version that is supported.
-    // Operators should normally use the defaults here, but it can be overridden for testing.
-    // Warning: Possible loss of funds if this is misconfigured.
-    this.maxConfigVersion = Number(ACROSS_MAX_CONFIG_VERSION ?? Constants.CONFIG_STORE_VERSION);
-    assert(!isNaN(this.maxConfigVersion), `Invalid maximum config version: ${this.maxConfigVersion}`);
-
     this.blockRangeEndBlockBuffer = BLOCK_RANGE_END_BLOCK_BUFFER
       ? JSON.parse(BLOCK_RANGE_END_BLOCK_BUFFER)
       : Constants.BUNDLE_END_BLOCK_BUFFERS;
@@ -74,7 +62,6 @@ export class CommonConfig {
 
     // `maxRelayerLookBack` is how far we fetch events from, modifying the search config's 'fromBlock'
     this.maxRelayerLookBack = Number(MAX_RELAYER_DEPOSIT_LOOK_BACK ?? Constants.MAX_RELAYER_DEPOSIT_LOOK_BACK);
-    this.hubPoolChainId = Number(HUB_CHAIN_ID ?? CHAIN_IDs.MAINNET);
     this.pollingDelay = Number(POLLING_DELAY ?? 60);
     this.maxBlockLookBack = MAX_BLOCK_LOOK_BACK ? JSON.parse(MAX_BLOCK_LOOK_BACK) : {};
     if (Object.keys(this.maxBlockLookBack).length === 0) {
@@ -83,12 +70,8 @@ export class CommonConfig {
     this.maxTxWait = Number(MAX_TX_WAIT_DURATION ?? 180); // 3 minutes
     this.sendingTransactionsEnabled = SEND_TRANSACTIONS === "true";
 
-    // Load the Arweave gateway from the environment.
-    const _arweaveGateway = isDefined(ARWEAVE_GATEWAY) ? JSON.parse(ARWEAVE_GATEWAY ?? "{}") : DEFAULT_ARWEAVE_GATEWAY;
-    assert(ArweaveGatewayInterfaceSS.is(_arweaveGateway), "Invalid Arweave gateway");
-    this.arweaveGateway = _arweaveGateway;
-
     this.spokePoolConfig = JSON.parse(SPOKE_POOL_CONFIG);
+    this.hubPoolChainId = 810180 in Object.keys(this.spokePoolConfig) ? 810180 : 810181;
     this.fillTokens = JSON.parse(FILL_TOKENS);
     this.hubpoolTokens = Object.keys(this.fillTokens).reduce(
       (hubpoolTokens, chainId) => {

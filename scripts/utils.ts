@@ -1,10 +1,9 @@
 import assert from "assert";
-import { Contract, ethers, utils as ethersUtils } from "ethers";
+import { utils as ethersUtils } from "ethers";
 import readline from "readline";
 import * as contracts from "@across-protocol/contracts";
-import { typechain } from "@across-protocol/sdk";
 import { utils as sdkUtils } from "@across-protocol/sdk";
-import { getDeployedContract, getNodeUrlList, CHAIN_IDs } from "../src/utils";
+import { getNodeUrlList, CHAIN_IDs } from "../src/utils";
 
 // https://nodejs.org/api/process.html#exit-codes
 export const NODE_SUCCESS = 0;
@@ -107,30 +106,4 @@ export function resolveHubChainId(spokeChainId: number): number {
 
   assert(sdkUtils.chainIsTestnet(spokeChainId), `Unsupported testnet SpokePool chain ID: ${spokeChainId}`);
   return CHAIN_IDs.SEPOLIA;
-}
-
-/**
- * @description Instantiate an ethers Contract instance.
- * @param chainId Chain ID for the contract deployment.
- * @param contractName Name of the deployed contract.
- * @returns ethers Contract instance.
- */
-export async function getContract(chainId: number, contractName: string): Promise<Contract> {
-  const contract = getDeployedContract(contractName, chainId);
-  const provider = new ethers.providers.StaticJsonRpcProvider(getProviderUrl(chainId));
-  return contract.connect(provider);
-}
-
-/**
- * @description Instantiate an Across SpokePool contract instance.
- * @param chainId Chain ID for the SpokePool deployment.
- * @returns SpokePool contract instance.
- */
-export async function getSpokePoolContract(chainId: number): Promise<Contract> {
-  const hubChainId = resolveHubChainId(chainId);
-  const hubPool = await getContract(hubChainId, "HubPool");
-  const spokePoolAddr = (await hubPool.crossChainContracts(chainId))[1];
-
-  const contract = new Contract(spokePoolAddr, typechain.SpokePool__factory.abi);
-  return contract;
 }

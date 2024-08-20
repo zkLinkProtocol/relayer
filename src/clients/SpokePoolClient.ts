@@ -202,11 +202,6 @@ export class IndexedSpokePoolClient extends clients.SpokePoolClient {
           event,
         });
       }
-    // } else if (eventName === "EnabledDepositRoute") {
-      // These are hard to back out because they're not stored with transaction information. They should be extremely
-      // rare, but at the margins could risk making an invalid fill based on the resolved outputToken for a deposit
-      // that specifies outputToken 0x0. Simply bail in this case; everything should be OK on the next run.
-      // throw new Error("Detected re-org affecting deposit route events.");
     } else {
       // Retaining any remaining event types should be non-critical for relayer operation. They may
       // produce sub-optimal decisions, but should not affect the correctness of relayer operation.
@@ -235,13 +230,6 @@ export class IndexedSpokePoolClient extends clients.SpokePoolClient {
       pendingEvents.forEach(({ removed }) => assert(!removed));
       return pendingEvents;
     });
-
-    // Find the latest deposit Ids, and if there are no new events, fall back to already stored values.
-    // const fundsDeposited = eventsToQuery.indexOf("V3FundsDeposited");
-    // const [firstDepositId, latestDepositId] = [
-    //   events[fundsDeposited].at(0)?.args?.nonce ?? this.getDeposits().at(0) ?? 0,
-    //   events[fundsDeposited].at(-1)?.args?.nonce ?? this.getDeposits().at(-1) ?? 0,
-    // ];
 
     return {
       success: true,

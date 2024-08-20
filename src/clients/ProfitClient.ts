@@ -139,13 +139,6 @@ export class ProfitClient {
       new defiLlama.PriceFeed(),
     ]);
 
-    // for (const chainId of this.enabledChainIds) {
-    //   this.relayerFeeQueries[chainId] = this.constructRelayerFeeQuery(
-    //     chainId,
-    //     spokePoolClients[chainId].spokePool.provider
-    //   );
-    // }
-
     this.isTestnet = this.hubPoolClient.chainId !== CHAIN_IDs.MAINNET;
   }
 
@@ -195,14 +188,7 @@ export class ProfitClient {
    * @returns Token token price for token.
    */
   getPriceOfToken(token: string): BigNumber {
-    // const address = this.resolveTokenAddress(token);
-    // const price = this.tokenPrices[address];
-    // if (!isDefined(price)) {
-    //   this.logger.warn({ at: "ProfitClient#getPriceOfToken", message: `Token ${token} not in price list.`, address });
-    //   return bnZero;
-    // }
-
-    // return price;
+    // TODO
     return bnZero;
   }
 
@@ -393,13 +379,6 @@ export class ProfitClient {
 
   // Return USD amount of fill amount for deposited token, should always return in wei as the units.
   getFillAmountInUsd(deposit: Deposit, fillAmount = deposit.outputAmount): BigNumber {
-    // const l1TokenInfo = this.hubPoolClient.getTokenInfoForDeposit(deposit);
-    // if (!l1TokenInfo) {
-    //   const { inputToken } = deposit;
-    //   throw new Error(
-    //     `ProfitClient#getFillAmountInUsd missing l1TokenInfo for deposit with origin token: ${inputToken}`
-    //   );
-    // }
     const l1TokenInfo = this.fillTokens[deposit.destinationChainId][deposit.outputToken];
     const tokenPriceInUsd = this.getPriceOfToken(l1TokenInfo.symbol);
     return fillAmount.mul(tokenPriceInUsd).div(bn10.pow(l1TokenInfo.decimals));

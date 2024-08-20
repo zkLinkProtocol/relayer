@@ -13,7 +13,6 @@ import {
   isDefined,
   getBlockForTimestamp,
   getChainQuorum,
-  getDeploymentBlockNumber,
   getNetworkName,
   getOriginFromURL,
   getProvider,
@@ -43,6 +42,7 @@ const INDEXER_POLLING_PERIOD = 2000; // ms; time to sleep between checking for e
 let logger: winston.Logger;
 let chain: string;
 let stop = false;
+let connected = false;
 let oldestTime = 0;
 
 /**
@@ -169,19 +169,6 @@ async function listen(
 
   const { filterArgs } = opts;
 
-  // On each new block, submit any "finalised" events.
-  // ethers block subscription drops most useful information, notably the timestamp for new blocks.
-  // The "official unofficial" strategy is to use an internal provider method to subscribe.
-  // See also: https://github.com/ethers-io/ethers.js/discussions/1951#discussioncomment-1229670
-  // await providers[0]._subscribe("newHeads", ["newHeads"], ({ number: blockNumber, timestamp: currentTime }) => {
-  //   [blockNumber, currentTime] = [parseInt(blockNumber), parseInt(currentTime)];
-  //   const events = eventMgr.tick(blockNumber);
-
-  //   Post an update to the parent. Do this irrespective of whether there were new events or not, since there's
-  //   information in blockNumber and currentTime alone.
-  //   postEvents(blockNumber, currentTime, events);
-  // });
-
   // Add a handler for each new instance of a subscribed event.
   providers.forEach((provider) => {
     const host = getOriginFromURL(provider.connection.url);
@@ -203,7 +190,7 @@ async function listen(
 
   do {
     await setTimeout(INDEXER_POLLING_PERIOD);
-  } while (!stop);
+  } while (!stop && connected);
 }
 
 /**
@@ -233,19 +220,12 @@ async function run(argv: string[]): Promise<void> {
   const cache = await getRedisCache();
   const latestBlock = await quorumProvider.getBlock("latest");
 
-  // const deploymentBlock = getDeploymentBlockNumber("SpokePool", chainId);
   let startBlock: number;
-  // if (/^@[0-9]+$/.test(lookback)) {
-  //   // Lookback to a specific block (lookback = @<block-number>).
-  //   startBlock = Number(lookback.slice(1));
-  // } else {
-    // Resolve `lookback` seconds from head to a specific block.
-    assert(Number.isInteger(Number(lookback)), `Invalid lookback (${lookback})`);
-    startBlock = Math.max(
-      deploymentBlock,
-      await getBlockForTimestamp(chainId, latestBlock.timestamp - lookback, blockFinder, cache)
-    );
-  // }
+  assert(Number.isInteger(Number(lookback)), `Invalid lookback (${lookback})`);
+  startBlock = Math.max(
+    deploymentBlock,
+    await getBlockForTimestamp(chainId, latestBlock.timestamp - lookback, blockFinder, cache)
+  );
 
   const opts = {
     finality,
@@ -276,33 +256,33 @@ async function run(argv: string[]): Promise<void> {
   // The SpokePoolClient reports on the timestamp of the oldest block searched. The relayer likely doesn't need this,
   // but resolve it anyway for consistency with the main SpokePoolClient implementation.
   const resolveOldestTime = async (spokePool: Contract, blockTag: ethersProviders.BlockTag) => {
-    oldestTime = (await spokePool.getCurrentTime({ blockTag })).toNumber();
+    oldestTime = (await spokePool.provider.getBlock(blockTag)).timestamp;
   };
 
   // Events to listen for.
   const events = ["IntentCreated", "IntentFilled"];
-
-  if (lookback > 0) {
-    const _spokePool = spokePool.connect(quorumProvider);
-    await Promise.all([
-      resolveOldestTime(_spokePool, startBlock),
-      ...events.map((event) => scrapeEvents(_spokePool, event, opts)),
-    ]);
-  }
 
   // If no lookback was specified then default to the timestamp of the latest block.
   oldestTime ??= latestBlock.timestamp;
 
   const eventMgr = new EventManager(logger, chainId, finality, quorum);
   do {
+    if (lookback > 0) {
+      const _spokePool = spokePool.connect(quorumProvider);
+      await Promise.all([
+        resolveOldestTime(_spokePool, startBlock),
+        ...events.map((event) => scrapeEvents(_spokePool, event, opts)),
+      ]);
+    }
     let providers: WebSocketProvider[] = [];
     try {
       providers = getWSProviders(chainId, quorum);
       assert(providers.length > 0, `Insufficient providers for ${chain} (required ${quorum} by quorum)`);
       providers.forEach((provider) => {
-        provider._websocket.on("error", (err) =>
-          logger.debug({ at: "RelayerSpokePoolIndexer::run", message: `Caught ${chain} provider error.`, err })
-        );
+        provider._websocket.on("error", (err) => {
+          logger.debug({ at: "RelayerSpokePoolIndexer::run", message: `Caught ${chain} provider error.`, err });
+          connected = false;
+        });
 
         provider._websocket.on("close", () => {
           logger.debug({
@@ -310,10 +290,12 @@ async function run(argv: string[]): Promise<void> {
             message: `${chain} provider connection closed.`,
             provider: getOriginFromURL(provider.connection.url),
           });
+          connected = false;
         });
       });
 
       logger.debug({ at: "RelayerSpokePoolIndexer::run", message: `Starting ${chain} listener.`, events, opts });
+      connected = true;
       await listen(eventMgr, spokePool, events, providers, opts);
     } catch (err) {
       providers.forEach((provider) => provider.removeAllListeners());

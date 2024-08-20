@@ -5,7 +5,6 @@ import {
   BigNumber,
   bnZero,
   Contract,
-  dedupArray,
   ERC20,
   isDefined,
   MAX_SAFE_ALLOWANCE,
@@ -18,7 +17,6 @@ import {
   toBN,
   winston,
   getRedisCache,
-  TOKEN_SYMBOLS_MAP,
 } from "../utils";
 
 export type TokenDataType = { [chainId: number]: { [token: string]: { balance: BigNumber; allowance: BigNumber } } };
@@ -43,9 +41,6 @@ export class TokenClient {
   }
 
   getBalance(chainId: number, token: string): BigNumber {
-    // if (!this._hasTokenPairData(chainId, token)) {
-    //   return bnZero;
-    // }
     if (this.tokenData[chainId][token] === undefined) {
       return bnZero;
     }
@@ -177,69 +172,15 @@ export class TokenClient {
 
   resolveRemoteTokens(chainId: number, hubPoolTokens: L1Token[]): Contract[] {
     const { signer } = this.spokePoolClients[chainId].spokePool;
-
-    // if (chainId === this.hubPoolClient.chainId) {
-      return hubPoolTokens.map(({ address }) => new Contract(address, ERC20.abi, signer));
-    // }
-
-    // const tokens = hubPoolTokens
-    //   .map(({ symbol, address }) => {
-    //     let tokenAddrs: string[] = [];
-    //     try {
-    //       const spokePoolToken = this.hubPoolClient.getL2TokenForL1TokenAtBlock(address, chainId);
-    //       tokenAddrs.push(spokePoolToken);
-    //     } catch {
-    //       // No known deployment for this token on the SpokePool.
-    //       // note: To be overhauled subject to https://github.com/across-protocol/sdk/pull/643
-    //     }
-
-    //     // If the HubPool token is USDC then it might map to multiple tokens on the destination chain.
-    //     if (symbol === "USDC") {
-    //       ["USDC.e", "USDbC"]
-    //         .map((symbol) => TOKEN_SYMBOLS_MAP[symbol]?.addresses[chainId])
-    //         .filter(isDefined)
-    //         .forEach((address) => tokenAddrs.push(address));
-    //       tokenAddrs = dedupArray(tokenAddrs);
-    //     }
-
-    //     return tokenAddrs.filter(isDefined).map((address) => new Contract(address, ERC20.abi, signer));
-    //   })
-    //   .flat();
-
-    // return tokens;
+    return hubPoolTokens.map(({ address }) => new Contract(address, ERC20.abi, signer));
   }
 
   async updateChain(
     chainId: number,
     hubPoolTokens: L1Token[]
   ): Promise<Record<string, { balance: BigNumber; allowance: BigNumber }>> {
-    // const { spokePool } = this.spokePoolClients[chainId];
-
-    // const multicall3 = await sdkUtils.getMulticall3(chainId, spokePool.provider);
-    // if (!isDefined(multicall3)) {
-      hubPoolTokens = this.hubpoolTokens[chainId];
-      return this.fetchTokenData(chainId, hubPoolTokens);
-    // }
-
-    // const { relayerAddress } = this;
-    // const balances: sdkUtils.Call3[] = [];
-    // const allowances: sdkUtils.Call3[] = [];
-    // this.resolveRemoteTokens(chainId, hubPoolTokens).forEach((token) => {
-    //   balances.push({ contract: token, method: "balanceOf", args: [relayerAddress] });
-    //   allowances.push({ contract: token, method: "allowance", args: [relayerAddress, spokePool.address] });
-    // });
-
-    // const calls = [...balances, ...allowances];
-    // const results = await sdkUtils.aggregate(multicall3, calls);
-
-    // const allowanceOffset = balances.length;
-    // const balanceInfo = Object.fromEntries(
-    //   balances.map(({ contract: { address } }, idx) => {
-    //     return [address, { balance: results[idx][0], allowance: results[allowanceOffset + idx][0] }];
-    //   })
-    // );
-
-    // return balanceInfo;
+    hubPoolTokens = this.hubpoolTokens[chainId];
+    return this.fetchTokenData(chainId, hubPoolTokens);
   }
 
   async update(): Promise<void> {
@@ -343,14 +284,6 @@ export class TokenClient {
       await redis.set(this._getBondTokenCacheKey(), bondToken);
     }
     return bondToken;
-  }
-
-  private _hasTokenPairData(chainId: number, token: string) {
-    const hasData = !!this.tokenData?.[chainId]?.[token];
-    if (!hasData) {
-      this.logger.warn({ at: "TokenBalanceClient", message: `No data on ${getNetworkName(chainId)} -> ${token}` });
-    }
-    return hasData;
   }
 
   protected async getRedis(): Promise<CachingMechanismInterface | undefined> {

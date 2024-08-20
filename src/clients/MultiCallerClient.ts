@@ -188,41 +188,15 @@ export class MultiCallerClient {
     });
 
     const txnRequestsToSubmit: AugmentedTransaction[] = [];
-
-    // First try to simulate the transaction as a batch. If the full batch succeeded, then we don't
-    // need to simulate transactions individually. If the batch failed, then we need to
-    // simulate the transactions individually and pick out the successful ones.
-    // const batchTxns: AugmentedTransaction[] = valueTxns.concat(
-    //   await this.buildMultiCallBundles(txns, this.chunkSize[chainId])
-    // );
-    // const batchSimResults = await this.txnClient.simulate(batchTxns);
-    // const batchesAllSucceeded = batchSimResults.every(({ succeed, transaction, reason }, idx) => {
-    //   // If txn succeeded or the revert reason is known to be benign, then log at debug level.
-    //   this.logger[
-    //     succeed || simulate || this.canIgnoreRevertReason({ succeed, transaction, reason }) ? "debug" : "error"
-    //   ]({
-    //     at: "MultiCallerClient#executeChainTxnQueue",
-    //     message: `${succeed ? "Successfully simulated" : "Failed to simulate"} ${networkName} transaction batch!`,
-    //     batchTxn: { ...transaction, contract: transaction.contract.address },
-    //     reason,
-    //   });
-    //   batchTxns[idx].gasLimit = succeed ? transaction.gasLimit : undefined;
-    //   return succeed;
-    // });
-
-    // if (batchesAllSucceeded) {
-    //   txnRequestsToSubmit.push(...batchTxns);
-    // } else {
-      const individualTxnSimResults = await Promise.allSettled([
-        this.simulateTransactionQueue(txns),
-        this.simulateTransactionQueue(valueTxns),
-      ]);
-      const [_txns, _valueTxns] = individualTxnSimResults.map((result): AugmentedTransaction[] => {
-        return isPromiseFulfilled(result) ? result.value : [];
-      });
-      // Fill in the set of txns to submit to the network. Anything that failed simulation is dropped.
-      txnRequestsToSubmit.push(..._valueTxns.concat(_txns));
-    // }
+    const individualTxnSimResults = await Promise.allSettled([
+      this.simulateTransactionQueue(txns),
+      this.simulateTransactionQueue(valueTxns),
+    ]);
+    const [_txns, _valueTxns] = individualTxnSimResults.map((result): AugmentedTransaction[] => {
+      return isPromiseFulfilled(result) ? result.value : [];
+    });
+    // Fill in the set of txns to submit to the network. Anything that failed simulation is dropped.
+    txnRequestsToSubmit.push(..._valueTxns.concat(_txns));
 
     if (simulate) {
       let mrkdwn = "";

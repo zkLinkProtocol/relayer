@@ -1,4 +1,4 @@
-import { BigNumber, ERC20, ethers, min, getEthAddressForChain } from "../utils";
+import { BigNumber, ERC20, ethers, min } from "../utils";
 
 // This type is used to map used and current balances of different users.
 export interface BalanceMap {
@@ -143,8 +143,8 @@ export class BalanceAllocator {
 
   // This method is primarily here to be overriden for testing purposes.
   protected async _queryBalance(chainId: number, token: string, holder: string): Promise<BigNumber> {
-    return getEthAddressForChain(chainId).toLowerCase() === token.toLowerCase()
-      ? await this.providers[chainId].getBalance(holder)
-      : await ERC20.connect(token, this.providers[chainId]).balanceOf(holder);
+
+    return await this.providers[chainId].getBalance(holder);
+    // return await ERC20.connect(token, this.providers[chainId]).balanceOf(holder);
   }
 }

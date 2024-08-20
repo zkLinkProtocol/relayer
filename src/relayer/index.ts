@@ -47,10 +47,6 @@ export async function runRelayer(_logger: winston.Logger, baseSigner: Signer): P
       }
 
       const tLoopStart = performance.now();
-      // if (run !== 1) {
-      //   await relayerClients.configStoreClient.update();
-      //   await relayerClients.hubPoolClient.update();
-      // }
       await updateRelayerClients(relayerClients, config);
 
       if (!config.skipRelays) {
@@ -58,12 +54,8 @@ export async function runRelayer(_logger: winston.Logger, baseSigner: Signer): P
         relayerClients.tokenClient.clearTokenData();
         await relayerClients.tokenClient.update();
         const simulate = !config.sendingRelaysEnabled;
-        txnReceipts = await relayer.checkForUnfilledDepositsAndFill(config.sendingSlowRelaysEnabled, simulate);
+        txnReceipts = await relayer.checkForUnfilledDepositsAndFill(simulate);
       }
-
-      // Unwrap WETH after filling deposits so we don't mess up slow fill logic, but before rebalancing
-      // any tokens so rebalancing can take into account unwrapped WETH balances.
-      // await relayerClients.inventoryClient.unwrapWeth();
 
       if (!config.skipRebalancing) {
         // Since the above spoke pool updates are slow, refresh token client before sending rebalances now:

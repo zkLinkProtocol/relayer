@@ -2,8 +2,7 @@ import assert from "assert";
 import winston from "winston";
 import {
   getProvider,
-  getDeployedContract,
-  getDeploymentBlockNumber,
+  getMainSpokepoolContract,
   Signer,
   Contract,
   ethers,
@@ -11,20 +10,17 @@ import {
   getCurrentTime,
   isDefined,
   getRedisCache,
-  getArweaveJWKSigner,
 } from "../utils";
 import { typechain } from "@across-protocol/sdk";
-import { HubPoolClient, MultiCallerClient, ConfigStoreClient, SpokePoolClient } from "../clients";
+import { HubPoolClient, MultiCallerClient, SpokePoolClient } from "../clients";
 import { CommonConfig } from "./Config";
 import { SpokePoolClientsByChain } from "../interfaces";
-import { caching, clients, utils as sdkUtils } from "@across-protocol/sdk";
+import { utils as sdkUtils } from "@across-protocol/sdk";
 
 export interface Clients {
   hubPoolClient: HubPoolClient;
-  configStoreClient: ConfigStoreClient;
   multiCallerClient: MultiCallerClient;
   hubSigner?: Signer;
-  arweaveClient: caching.ArweaveClient;
 }
 
 async function getSpokePoolSigners(
@@ -69,7 +65,6 @@ export async function resolveSpokePoolActivationBlock(
   const blockFinder = undefined;
   const mainnetActivationBlock = hubPoolClient.getSpokePoolActivationBlock(chainId, spokePoolAddr);
   const { timestamp } = await hubPoolClient.hubPool.provider.getBlock(mainnetActivationBlock);
-  // const hints = { lowBlock: getDeploymentBlockNumber("SpokePool", chainId) };
   const activationBlock = await getBlockForTimestamp(chainId, timestamp, blockFinder, redis, { lowBlock: 0 });
 
   const cacheAfter = 5 * 24 * 3600; // 5 days
@@ -91,7 +86,6 @@ export async function resolveSpokePoolActivationBlock(
 export async function constructSpokePoolClientsWithLookback(
   logger: winston.Logger,
   hubPoolClient: HubPoolClient,
-  configStoreClient: ConfigStoreClient,
   config: CommonConfig,
   baseSigner: Signer,
   initialLookBackOverride: number,
@@ -103,10 +97,6 @@ export async function constructSpokePoolClientsWithLookback(
   // running the disputer or proposer functionality as it can lead to proposing disputable bundles or
   // disputing valid bundles.
 
-  // if (!hubPoolClient.isUpdated) {
-  //   throw new Error("Config store client must be updated before constructing spoke pool clients");
-  // }
-
   const hubPoolChainId = hubPoolClient.chainId;
   const lookback = getCurrentTime() - initialLookBackOverride;
 
@@ -116,7 +106,7 @@ export async function constructSpokePoolClientsWithLookback(
   const blockFinder = undefined;
   const redis = await getRedisCache(logger);
   const fromBlock_1 = await getBlockForTimestamp(hubPoolChainId, lookback, blockFinder, redis);
-  enabledChains ??= getEnabledChainsInBlockRange(configStoreClient, config.spokePoolChainsOverride, fromBlock_1);
+  enabledChains ??= config.spokePoolChainsOverride;
   assert(enabledChains.length > 0, "No SpokePool chains configured");
 
   // Get full list of fromBlocks now for chains that are enabled. This way we don't send RPC requests to
@@ -136,7 +126,6 @@ export async function constructSpokePoolClientsWithLookback(
   // @dev: If toBlocks = {} then  construct spoke pool clients that query until the latest blocks.
   return await constructSpokePoolClientsWithStartBlocks(
     logger,
-    hubPoolClient,
     config,
     baseSigner,
     fromBlocks,
@@ -145,25 +134,6 @@ export async function constructSpokePoolClientsWithLookback(
   );
 }
 
-/**
- * @notice Return list of enabled spoke pool chains in mainnet block range. These chains were all enabled at some point
- * in the ConfigStore between [mainnetStartBlock, mainnetEndBlock]. Caller can override this list with
- * process.env.SPOKE_POOL_CHAINS_OVERRIDE to force certain spoke pool clients to be constructed.
- * @returns number[] List of enabled spoke pool chains.
- */
-function getEnabledChainsInBlockRange(
-  configStoreClient: clients.AcrossConfigStoreClient,
-  spokePoolChainsOverride: number[],
-  mainnetStartBlock: number,
-  mainnetEndBlock?: number
-): number[] {
-  // if (!configStoreClient.isUpdated) {
-  //   throw new Error("Config store client must be updated before constructing spoke pool clients");
-  // }
-  return spokePoolChainsOverride.length > 0
-    ? spokePoolChainsOverride
-    : configStoreClient.getEnabledChainsInBlockRange(mainnetStartBlock, mainnetEndBlock);
-}
 /**
  * Construct spoke pool clients that query from [startBlockOverride, toBlockOverride]. Clients on chains that are
  * disabled at startBlockOverride will be set to undefined.
@@ -174,19 +144,13 @@ function getEnabledChainsInBlockRange(
  */
 export async function constructSpokePoolClientsWithStartBlocks(
   logger: winston.Logger,
-  hubPoolClient: HubPoolClient,
   config: CommonConfig,
   baseSigner: Signer,
   startBlocks: { [chainId: number]: number },
   toBlockOverride: { [chainId: number]: number } = {},
   enabledChains?: number[]
 ): Promise<SpokePoolClientsByChain> {
-  enabledChains ??= getEnabledChainsInBlockRange(
-    hubPoolClient.configStoreClient,
-    config.spokePoolChainsOverride,
-    startBlocks[hubPoolClient.chainId],
-    toBlockOverride[hubPoolClient.chainId]
-  );
+  enabledChains ??= config.spokePoolChainsOverride;
 
   logger.debug({
     at: "ClientHelper#constructSpokePoolClientsWithStartBlocks",
@@ -203,10 +167,8 @@ export async function constructSpokePoolClientsWithStartBlocks(
   const spokePoolSigners = await getSpokePoolSigners(baseSigner, enabledChains);
   const spokePools = await Promise.all(
     enabledChains.map(async (chainId) => {
-      // const spokePoolAddr = hubPoolClient.getSpokePoolForBlock(chainId, toBlockOverride[1]);
       const spokePoolAddr = config.spokePoolConfig[chainId]["address"];
       const spokePoolContract = typechain.SpokePool__factory.connect(spokePoolAddr, spokePoolSigners[chainId]);
-      // const registrationBlock = await resolveSpokePoolActivationBlock(chainId, hubPoolClient, toBlockOverride[1]);
       const registrationBlock = config.spokePoolConfig[chainId]["registrationBlock"];
       return { chainId, contract: spokePoolContract, registrationBlock };
     })
@@ -222,18 +184,13 @@ export async function constructSpokePoolClientsWithStartBlocks(
         if (isDefined(toBlockOverride[chainId])) {
           return [chainId, toBlockOverride[chainId]];
         }
-        // if (chainId === hubPoolClient.chainId) {
-        //   return [chainId, hubPoolBlock.number];
-        // } else {
-          // const toBlock = await getBlockForTimestamp(chainId, hubPoolBlock.timestamp, blockFinder, redis);
-          const toBlock = await getBlockForTimestamp(chainId, Math.round(Date.now()/1000), blockFinder, redis);
-          return [chainId, toBlock];
-        // }
+        const toBlock = await getBlockForTimestamp(chainId, Math.round(Date.now()/1000), blockFinder, redis);
+        return [chainId, toBlock];
       })
     )
   );
 
-  return getSpokePoolClientsForContract(logger, hubPoolClient, config, spokePools, startBlocks, latestBlocksForChain);
+  return getSpokePoolClientsForContract(logger, config, spokePools, startBlocks, latestBlocksForChain);
 }
 
 /**
@@ -245,7 +202,6 @@ export async function constructSpokePoolClientsWithStartBlocks(
  */
 export function getSpokePoolClientsForContract(
   logger: winston.Logger,
-  hubPoolClient: HubPoolClient,
   config: CommonConfig,
   spokePools: { chainId: number; contract: Contract; registrationBlock: number }[],
   fromBlocks: { [chainId: number]: number },
@@ -281,7 +237,6 @@ export function getSpokePoolClientsForContract(
     spokePoolClients[chainId] = new SpokePoolClient(
       logger,
       contract,
-      // hubPoolClient,
       null,
       chainId,
       registrationBlock,
@@ -309,34 +264,19 @@ export async function constructClients(
   const hubSigner = baseSigner.connect(hubPoolProvider);
   const latestMainnetBlock = await hubPoolProvider.getBlockNumber();
 
-  const rateModelClientSearchSettings = {
-    fromBlock: Number(getDeploymentBlockNumber("AcrossConfigStore", config.hubPoolChainId)),
-    toBlock: config.toBlockOverride[config.hubPoolChainId] ?? latestMainnetBlock,
-    maxBlockLookBack: config.maxBlockLookBack[config.hubPoolChainId],
-  };
-
-  const configStore = getDeployedContract("AcrossConfigStore", config.hubPoolChainId, hubSigner);
-  const configStoreClient = new ConfigStoreClient(
-    logger,
-    configStore,
-    rateModelClientSearchSettings,
-    config.maxConfigVersion
-  );
-
-  const hubPoolDeploymentBlock = Number(getDeploymentBlockNumber("HubPool", config.hubPoolChainId));
+  const hubPoolDeploymentBlock = config.spokePoolConfig[config.hubPoolChainId]["registrationBlock"];
   const { average: avgMainnetBlockTime } = await sdkUtils.averageBlockTime(hubPoolProvider);
   const fromBlock = isDefined(hubPoolLookback)
     ? Math.max(latestMainnetBlock - hubPoolLookback / avgMainnetBlockTime, hubPoolDeploymentBlock)
     : hubPoolDeploymentBlock;
-  const hubPoolClientSearchSettings = { ...rateModelClientSearchSettings, fromBlock };
+  const hubPoolClientSearchSettings = { fromBlock };
 
   // Create contract instances for each chain for each required contract.
-  const hubPool = getDeployedContract("HubPool", config.hubPoolChainId, hubSigner);
+  const hubPool = getMainSpokepoolContract(config.spokePoolConfig[config.hubPoolChainId]["address"], config.hubPoolChainId, hubSigner);
   const hubPoolClient = new HubPoolClient(
     logger,
     hubPool,
     config.fillTokens,
-    configStoreClient,
     hubPoolDeploymentBlock,
     config.hubPoolChainId,
     hubPoolClientSearchSettings,
@@ -345,26 +285,7 @@ export async function constructClients(
   );
 
   const multiCallerClient = new MultiCallerClient(logger, config.multiCallChunkSize, hubSigner);
-
-  // Define the Arweave client as "read-only" to prevent any accidental writes to the Arweave network.
-  // Only the dataworker should have write access to the Arweave network - we will define that in
-  // the more specialized dataworker client helper.
-  const arweaveClient = new caching.ArweaveClient(
-    getArweaveJWKSigner({ keyType: "read-only" }),
-    logger,
-    config.arweaveGateway?.url,
-    config.arweaveGateway?.protocol,
-    config.arweaveGateway?.port
-  );
-
-  return { hubPoolClient, configStoreClient, multiCallerClient, hubSigner, arweaveClient };
-}
-
-// @dev The HubPoolClient is dependent on the state of the ConfigStoreClient,
-//      so update the ConfigStoreClient first.
-export async function updateClients(clients: Clients, config: CommonConfig, logger?: winston.Logger): Promise<void> {
-  await clients.configStoreClient.update();
-  config.validate(clients.configStoreClient.getChainIdIndicesForBlock(), logger);
+  return { hubPoolClient, multiCallerClient, hubSigner };
 }
 
 export function spokePoolClientsToProviders(spokePoolClients: { [chainId: number]: SpokePoolClient }): {

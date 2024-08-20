@@ -1,6 +1,6 @@
 import { clients } from "@across-protocol/sdk";
 import { Contract, winston, BigNumber } from "../utils";
-import { ConfigStoreClient, HubPoolClient } from "../../src/clients";
+import { HubPoolClient } from "../../src/clients";
 import { MockConfigStoreClient } from "./MockConfigStoreClient";
 import { L1Token } from "../../src/interfaces";
 
@@ -13,7 +13,7 @@ export class MockHubPoolClient extends clients.mocks.MockHubPoolClient {
   constructor(
     logger: winston.Logger,
     hubPool: Contract,
-    configStoreClient: ConfigStoreClient | MockConfigStoreClient,
+    configStoreClient: MockConfigStoreClient,
     deploymentBlock = 0,
     chainId = 1
   ) {

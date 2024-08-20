@@ -1,9 +1,6 @@
 import minimist from "minimist";
 import { config, delay, exit, retrieveSignerFromCLIArgs, help, Logger, usage, waitForLogger } from "./src/utils";
 import { runRelayer } from "./src/relayer";
-import { runDataworker } from "./src/dataworker";
-import { runMonitor } from "./src/monitor";
-import { runFinalizer } from "./src/finalizer";
 import { version } from "./package.json";
 
 let logger: typeof Logger;
@@ -13,10 +10,7 @@ export async function run(args: { [k: string]: boolean | string }): Promise<void
   logger = Logger;
 
   const cmds = {
-    dataworker: runDataworker,
-    finalizer: runFinalizer,
     help: help,
-    monitor: runMonitor,
     relayer: runRelayer,
   };
 
