@@ -71,7 +71,7 @@ export class CommonConfig {
     this.sendingTransactionsEnabled = SEND_TRANSACTIONS === "true";
 
     this.spokePoolConfig = JSON.parse(SPOKE_POOL_CONFIG);
-    this.hubPoolChainId = 810180 in Object.keys(this.spokePoolConfig) ? 810180 : 810181;
+    this.hubPoolChainId = Number(HUB_CHAIN_ID ?? (810180 in Object.keys(this.spokePoolConfig) ? 810180 : 810181));
     this.fillTokens = JSON.parse(FILL_TOKENS);
     this.hubpoolTokens = Object.keys(this.fillTokens).reduce(
       (hubpoolTokens, chainId) => {

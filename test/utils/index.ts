@@ -4,5 +4,3 @@ export * as uma from "@uma/logger";
 export * from "./utils";
 export * from "./BlockchainUtils";
 export * from "./SpokePoolUtils";
-
-export { smock } from "@defi-wonderland/smock";

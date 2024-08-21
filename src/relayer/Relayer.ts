@@ -322,7 +322,7 @@ export class Relayer {
   ): Promise<void> {
     for (let i = 0; i < deposits.length; ++i) {
       const { fillStatus, ...deposit } = deposits[i];
-      const relayerLpFees = [{ paymentChainId: 810181, lpFeePct: BigNumber.from(100) }];
+      const relayerLpFees = [{ paymentChainId: deposit.originChainId, lpFeePct: bnZero }];
       await this.evaluateFill(
         deposit,
         fillStatus,
