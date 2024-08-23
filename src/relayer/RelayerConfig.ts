@@ -3,12 +3,10 @@ import winston from "winston";
 import { typeguards } from "@across-protocol/sdk";
 import {
   BigNumber,
-  bnUint256Max,
   CHAIN_IDs,
   dedupArray,
   toBNWei,
   assert,
-  getNetworkName,
   isDefined,
   readFileSync,
   toBN,
@@ -19,11 +17,6 @@ import {
 import { CommonConfig, ProcessEnv } from "../common";
 import * as Constants from "../common/Constants";
 import { InventoryConfig, TokenBalanceConfig, isAliasConfig } from "../interfaces/InventoryManagement";
-
-type DepositConfirmationConfig = {
-  usdThreshold: BigNumber;
-  minConfirmations: number;
-};
 
 export class RelayerConfig extends CommonConfig {
   readonly externalIndexer: boolean;
@@ -37,7 +30,6 @@ export class RelayerConfig extends CommonConfig {
   readonly sendingRelaysEnabled: boolean;
   readonly sendingRebalancesEnabled: boolean;
   readonly sendingMessageRelaysEnabled: boolean;
-  readonly sendingSlowRelaysEnabled: boolean;
   readonly relayerTokens: string[];
   readonly relayerOriginChains: number[] = [];
   readonly relayerDestinationChains: number[] = [];
@@ -46,21 +38,11 @@ export class RelayerConfig extends CommonConfig {
   readonly relayerMessageGasMultiplier: BigNumber;
   readonly minRelayerFeePct: BigNumber;
   readonly acceptInvalidFills: boolean;
-  // List of depositors we only want to send slow fills for.
-  readonly slowDepositors: string[];
-  // Following distances in blocks to guarantee finality on each chain.
-  readonly minDepositConfirmations: {
-    [chainId: number]: DepositConfirmationConfig[];
-  };
-  // Set to false to skip querying max deposit limit from /limits Vercel API endpoint. Otherwise relayer will not
-  // fill any deposit over the limit which is based on liquidReserves in the HubPool.
-  readonly ignoreLimits: boolean;
 
   constructor(env: ProcessEnv) {
     const {
       RELAYER_ORIGIN_CHAINS,
       RELAYER_DESTINATION_CHAINS,
-      SLOW_DEPOSITORS,
       DEBUG_PROFITABILITY,
       RELAYER_GAS_MESSAGE_MULTIPLIER,
       RELAYER_GAS_MULTIPLIER,
@@ -73,9 +55,6 @@ export class RelayerConfig extends CommonConfig {
       SEND_MESSAGE_RELAYS,
       SKIP_RELAYS,
       MIN_RELAYER_FEE_PCT,
-      ACCEPT_INVALID_FILLS,
-      MIN_DEPOSIT_CONFIRMATIONS,
-      RELAYER_IGNORE_LIMITS,
       RELAYER_EXTERNAL_INDEXER,
       RELAYER_SPOKEPOOL_INDEXER_PATH,
     } = env;
@@ -93,10 +72,6 @@ export class RelayerConfig extends CommonConfig {
     this.relayerTokens = RELAYER_TOKENS
       ? JSON.parse(RELAYER_TOKENS).map((token) => ethers.utils.getAddress(token))
       : [];
-    this.slowDepositors = SLOW_DEPOSITORS
-      ? JSON.parse(SLOW_DEPOSITORS).map((depositor) => ethers.utils.getAddress(depositor))
-      : [];
-
     this.minRelayerFeePct = toBNWei(MIN_RELAYER_FEE_PCT || Constants.RELAYER_MIN_FEE_PCT);
 
     assert(
@@ -235,52 +210,6 @@ export class RelayerConfig extends CommonConfig {
     this.sendingMessageRelaysEnabled = SEND_MESSAGE_RELAYS === "true";
     this.skipRelays = SKIP_RELAYS === "true";
     this.skipRebalancing = true;
-    this.sendingSlowRelaysEnabled = false;
-    this.acceptInvalidFills = ACCEPT_INVALID_FILLS === "true";
-
-    const minDepositConfirmations = MIN_DEPOSIT_CONFIRMATIONS
-      ? JSON.parse(MIN_DEPOSIT_CONFIRMATIONS)
-      : Constants.MIN_DEPOSIT_CONFIRMATIONS;
-
-    // Transform deposit confirmation requirements into an array of ascending
-    // deposit confirmations, sorted by the corresponding threshold in USD.
-    this.minDepositConfirmations = {};
-    Object.keys(minDepositConfirmations)
-      .map((_threshold) => {
-        const threshold = Number(_threshold);
-        assert(!isNaN(threshold) && threshold >= 0, `Invalid deposit confirmation threshold (${_threshold})`);
-        return threshold;
-      })
-      .sort((x, y) => x - y)
-      .forEach((usdThreshold) => {
-        const config = minDepositConfirmations[usdThreshold];
-
-        Object.entries(config).forEach(([chainId, _minConfirmations]) => {
-          const minConfirmations = Number(_minConfirmations);
-          assert(
-            !isNaN(minConfirmations) && minConfirmations >= 0,
-            `${getNetworkName(chainId)} deposit confirmations for` +
-              ` ${usdThreshold} threshold missing or invalid (${_minConfirmations}).`
-          );
-
-          this.minDepositConfirmations[chainId] ??= [];
-          this.minDepositConfirmations[chainId].push({ usdThreshold: toBNWei(usdThreshold), minConfirmations });
-        });
-      });
-
-      // Append default thresholds as a safe upper-bound.
-      Object.keys(this.minDepositConfirmations).forEach((chainId) => {
-        const depositConfirmations = this.minDepositConfirmations[chainId];
-        if (depositConfirmations.at(-1).minConfirmations < Number.MAX_SAFE_INTEGER) {
-          depositConfirmations.push({
-            usdThreshold: bnUint256Max,
-            minConfirmations: Number.MAX_SAFE_INTEGER,
-          });
-        }
-      });
-    // }
-
-    this.ignoreLimits = RELAYER_IGNORE_LIMITS === "true";
   }
 
   /**

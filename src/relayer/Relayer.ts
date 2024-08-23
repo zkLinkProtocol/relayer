@@ -44,19 +44,6 @@ export class Relayer {
     readonly clients: RelayerClients,
     readonly config: RelayerConfig
   ) {
-    Object.values(clients.spokePoolClients).forEach(({ chainId }) => {
-      if (!isDefined(config.minDepositConfirmations[chainId])) {
-        const chain = getNetworkName(chainId);
-        logger.warn({
-          at: "Relayer::constructor",
-          message: `${chain} deposit confirmation configuration is missing.`,
-        });
-        config.minDepositConfirmations[chainId] = [
-          { usdThreshold: bnUint256Max, minConfirmations: Number.MAX_SAFE_INTEGER },
-        ];
-      }
-    });
-
     this.relayerAddress = getAddress(relayerAddress);
     this.refundRecipient = config.refundRecipient ?? this.relayerAddress;
     this.l2Recipient = config.l2Recipient ?? this.relayerAddress;
@@ -210,7 +197,6 @@ export class Relayer {
     destinationChainId: number
   ): { [chainId: number]: number } {
     const { profitClient, tokenClient } = this.clients;
-    const { minDepositConfirmations } = this.config;
 
     // Sum the total unfilled deposit amount per origin chain and set a MDC for that chain.
     // Filter out deposits where the relayer doesn't have the balance to make the fill.
@@ -225,12 +211,8 @@ export class Relayer {
     // Set the MDC for each origin chain equal to lowest threshold greater than the unfilled USD deposit amount.
     const mdcPerChain = Object.fromEntries(
       Object.entries(unfilledDepositAmountsPerChain).map(([chainId, unfilledAmount]) => {
-        const { minConfirmations } = minDepositConfirmations[chainId].find(({ usdThreshold }) =>
-          usdThreshold.gte(unfilledAmount)
-        );
-
         // If no thresholds are greater than unfilled amount, then use fallback which should have largest MDCs.
-        return [chainId, minConfirmations];
+        return [chainId, 0];
       })
     );
 
@@ -258,18 +240,6 @@ export class Relayer {
   ): Promise<void> {
     const { nonce, intentOwner, intentReceiver, destinationChainId, originChainId, inputToken } = deposit;
     const { tokenClient } = this.clients;
-    const { slowDepositors } = this.config;
-
-    // If depositor is on the slow deposit list, then send a zero fill to initiate a slow relay and return early.
-    if (slowDepositors?.includes(intentOwner) && fillStatus === FillStatus.Unfilled) {
-      this.logger.debug({
-        at: "Relayer::evaluateFill",
-        message: "Initiating slow fill for grey listed depositor",
-        intentOwner,
-      });
-      this.requestSlowFill(deposit);
-      return;
-    }
 
     const selfRelay = [intentOwner, intentReceiver].every((address) => address === this.relayerAddress);
     if (tokenClient.hasBalanceForFill(deposit) && !selfRelay) {
@@ -516,22 +486,8 @@ export class Relayer {
     const l2GasPerPubdataByteLimit = ethersUtils.parseUnits("800", "wei");
     // const value = ethersUtils.parseEther("0.0005");
 
-    const [method, messageModifier, args] = !isDepositSpedUp(deposit)
-      ? ["fillIntent", "", [deposit, repaymentChainId, l2TxGasLimit, l2GasPerPubdataByteLimit, refundRecipient, l2Recipient]]
-      : [
-          "fillV3RelayWithUpdatedDeposit",
-          " with updated parameters ",
-          [
-            deposit,
-            repaymentChainId,
-            deposit.updatedOutputAmount,
-            deposit.updatedRecipient,
-            deposit.updatedMessage,
-            deposit.speedUpSignature,
-          ],
-        ];
-
-    const message = `Filled v3 deposit ${messageModifier}🚀`;
+    const [method, args] = ["fillIntent", [deposit, repaymentChainId, l2TxGasLimit, l2GasPerPubdataByteLimit, refundRecipient, l2Recipient]];
+    const message = `Filled v3 deposit 🚀`;
     const mrkdwn = this.constructRelayFilledMrkdwn(deposit, repaymentChainId, realizedLpFeePct);
     const contract = spokePoolClients[deposit.destinationChainId].spokePool;
     const chainId = deposit.destinationChainId;

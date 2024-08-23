@@ -106,7 +106,6 @@ export class ProfitClient {
   constructor(
     readonly logger: winston.Logger,
     readonly hubPoolClient: HubPoolClient,
-    spokePoolClients: SpokePoolClientsByChain,
     readonly enabledChainIds: number[],
     readonly relayerAddress: string,
     readonly defaultMinRelayerFeePct = toBNWei(constants.RELAYER_MIN_FEE_PCT),

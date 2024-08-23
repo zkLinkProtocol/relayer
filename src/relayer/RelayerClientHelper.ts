@@ -83,7 +83,7 @@ export async function constructRelayerClients(
   if (config.externalIndexer) {
     spokePoolClients = Object.fromEntries(
       await sdkUtils.mapAsync(enabledChains, async (chainId) => {
-        const finality = config.minDepositConfirmations[chainId].at(0)?.minConfirmations ?? 1024;
+        const finality = 0;
         const opts = {
           finality,
           spokePoolAddr: config.spokePoolConfig[chainId]["address"],
@@ -112,7 +112,6 @@ export async function constructRelayerClients(
   const profitClient = new ProfitClient(
     logger,
     hubPoolClient,
-    spokePoolClients,
     enabledChainIds,
     signerAddr,
     config.minRelayerFeePct,
