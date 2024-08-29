@@ -238,32 +238,13 @@ export class Relayer {
     fillStatus: number,
     lpFees: RepaymentFee[],
   ): Promise<void> {
-    const { nonce, intentOwner, intentReceiver, destinationChainId, originChainId, inputToken } = deposit;
+    const { destinationChainId, originChainId } = deposit;
     const { tokenClient } = this.clients;
 
-    const selfRelay = [intentOwner, intentReceiver].every((address) => address === this.relayerAddress);
-    if (tokenClient.hasBalanceForFill(deposit) && !selfRelay) {
+    if (tokenClient.hasBalanceForFill(deposit)) {
         this.fillRelay(deposit, lpFees[0]["paymentChainId"], lpFees[0]["lpFeePct"], this.refundRecipient, this.l2Recipient, undefined);
         // Update local balance to account for the enqueued fill.
         tokenClient.decrementLocalBalance(destinationChainId, deposit.outputToken, deposit.outputAmount);
-    } else if (selfRelay) {
-      // Prefer exiting early here to avoid fast filling any deposits we send. This approach assumes that we always
-      // prefer someone else to fill the deposits.
-      if (deposit.fromLiteChain) {
-        this.logger.debug({
-          at: "Relayer::evaluateFill",
-          message: "Skipping self-relay deposit originating from lite chain.",
-          originChainId,
-          intentOwner,
-          nonce,
-        });
-        return;
-      }
-      // A relayer can fill its own deposit without an ERC20 transfer. Only bypass profitability requirements if the
-      // relayer is both the depositor and the recipient, because a deposit on a cheap SpokePool chain could cause
-      // expensive fills on (for example) mainnet.
-      const { lpFeePct } = lpFees.find((lpFee) => lpFee.paymentChainId === destinationChainId);
-      this.fillRelay(deposit, destinationChainId, lpFeePct, this.refundRecipient, this.l2Recipient);
     } else {
       // TokenClient.getBalance returns that we don't have enough balance to submit the fast fill.
       // At this point, capture the shortfall so that the inventory manager can rebalance the token inventory.
@@ -284,15 +265,17 @@ export class Relayer {
    * For a given destination chain, evaluate and optionally fill each unfilled deposit. Note that each fill should be
    * evaluated sequentially in order to ensure atomic balance updates.
    * @param deposits An array of deposits destined for the same destination chain.
-   * @param maxBlockNumbers A map of the highest block number per origin chain to fill.
+   * @param repaymentChainId
    * @returns void
    */
   async evaluateFills(
     deposits: (V3DepositWithBlock & { fillStatus: number })[],
+    repaymentChainId: { [chainId: number]: number }
   ): Promise<void> {
     for (let i = 0; i < deposits.length; ++i) {
       const { fillStatus, ...deposit } = deposits[i];
-      const relayerLpFees = [{ paymentChainId: deposit.originChainId, lpFeePct: bnZero }];
+      const paymentChainId = repaymentChainId[deposit.destinationChainId] == 0 ? deposit.originChainId : repaymentChainId[deposit.destinationChainId];
+      const relayerLpFees = [{ paymentChainId, lpFeePct: bnZero }];
       await this.evaluateFill(
         deposit,
         fillStatus,
@@ -394,7 +377,7 @@ export class Relayer {
         }
       };
 
-      await this.evaluateFills(unfilledDeposits);
+      await this.evaluateFills(unfilledDeposits, this.config.repaymentChainId);
 
       if (multiCallerClient.getQueuedTransactions(destinationChainId).length > 0) {
         txnReceipts[destinationChainId] = this.executeFills(destinationChainId, simulate);
@@ -475,12 +458,6 @@ export class Relayer {
       repaymentChainId,
       realizedLpFeePct,
     });
-
-    // If a deposit originates from a lite chain, then the repayment chain must be the origin chain.
-    assert(
-      !deposit.fromLiteChain || repaymentChainId === deposit.originChainId,
-      `Lite chain deposits must be filled on its origin chain (${deposit.originChainId}). Depositor: ${deposit.intentOwner} and Nonce: ${deposit.nonce}.`
-    );
 
     const l2TxGasLimit = gasLimit ?? ethersUtils.parseUnits("2000000", "wei");
     const l2GasPerPubdataByteLimit = ethersUtils.parseUnits("800", "wei");

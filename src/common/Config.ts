@@ -23,6 +23,7 @@ export class CommonConfig {
   readonly hubpoolTokens: { [chainId: number]: [] };
   readonly refundRecipient: string;
   readonly l2Recipient: string;
+  readonly repaymentChainId: { [chainId: number]: number }; 
 
   // State we'll load after we update the config store client and fetch all chains we want to support.
   public multiCallChunkSize: { [chainId: number]: number } = {};
@@ -43,7 +44,8 @@ export class CommonConfig {
       SPOKE_POOL_CONFIG,
       FILL_TOKENS,
       REFUND_RECIPIENT,
-      L2_RECIPIENT
+      REPAYMENT_RECIPIENT,
+      REPAYMENT_CHAINID
     } = env;
 
     this.version = ACROSS_BOT_VERSION ?? "unknown";
@@ -82,12 +84,28 @@ export class CommonConfig {
               'decimals': this.fillTokens[chainId][token]['decimals']
             });
             return chainTokens;
-          }, []);
+          }, []
+        );
         return hubpoolTokens;
-      }, {});
+      }, {}
+    );
     this.spokePoolChainsOverride = Object.keys(this.spokePoolConfig).map(Number);
+    
     this.refundRecipient = REFUND_RECIPIENT;
-    this.l2Recipient = L2_RECIPIENT;
+    this.l2Recipient = REPAYMENT_RECIPIENT;
+    this.repaymentChainId = Object.keys(this.fillTokens).reduce(
+      (repaymentChainId, chainId) => {
+        let _repaymentChainId = process.env[`REPAYMENT_CHAINID_${chainId}`] ?? REPAYMENT_CHAINID;
+        repaymentChainId[chainId] = Number(_repaymentChainId);
+        if (isNaN(repaymentChainId[chainId])) {
+          repaymentChainId[chainId] = (_repaymentChainId === "destination") ? Number(chainId) : 0;
+        }
+        if (repaymentChainId[chainId] != 0 && !(repaymentChainId[chainId] in this.fillTokens)) {
+          throw new Error(`repayment chainid ${repaymentChainId[chainId]} is not supported`);
+        }
+        return repaymentChainId;
+      }, {}
+    );
   }
 
   /**
